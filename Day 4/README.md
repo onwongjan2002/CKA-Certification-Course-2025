@@ -24,9 +24,9 @@ To build an image using a custom-named Dockerfile, you need to use the `-f` flag
 docker build -t <image-name> -f <path-to-custom-dockerfile> <build-context>
 ```
 
-`-t`: Tags the image.
-`-f`: Specifies the custom Dockerfile name.
-`<build-context>`: The directory containing files required for the build.
+`-t`: Tags the image
+`-f`: Specifies the custom Dockerfile name
+`<build-context>`: The directory containing files required for the build
 
 ### What is Build Context?
 
