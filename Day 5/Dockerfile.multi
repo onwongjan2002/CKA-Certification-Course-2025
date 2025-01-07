@@ -1,0 +1,14 @@
+# Stage:1
+FROM python:3.9-slim AS build
+WORKDIR /app 
+COPY app.py app.py  
+RUN pip install flask  && apt update && apt install -y build-essential
+
+#Stage:2 Final/Production
+FROM python:3.9-slim
+WORKDIR /app 
+COPY --from=build /app .  
+RUN pip install flask
+EXPOSE 5000 
+ENTRYPOINT [ "python" ]
+CMD [ "app.py" ]
