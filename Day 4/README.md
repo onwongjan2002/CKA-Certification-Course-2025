@@ -2,7 +2,7 @@
 
 ## Video reference for Day 4 is the following:
 
-[![Day 4: Docker Flags, Deep Dive into Dockerfile, and Exposing Containers](https://img.youtube.com/vi/p8VQmk_zbVo/1.jpg)](https://www.youtube.com/watch?v=p8VQmk_zbVo)
+[![Watch the video](https://img.youtube.com/vi/34l1gRszQS4/maxresdefault.jpg)](https://youtu.be/34l1gRszQS4)
 
 # Specifying a Custom Dockerfile Name and Understanding the Build Command in Docker
 

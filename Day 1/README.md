@@ -2,7 +2,8 @@
 
 ## Video reference for Day 1 is the following:
 
-[![Day 1: Docker Fundamentals for Kubernetes](https://img.youtube.com/vi/p8VQmk_zbVo/1.jpg)](https://www.youtube.com/watch?v=p8VQmk_zbVo)
+[![Watch the video](https://img.youtube.com/vi/r3QWVLeA5qM/maxresdefault.jpg)](https://youtu.be/r3QWVLeA5qM)
+
 
 ## How Were Development and Deployment Done Before Docker? Why do We Need Docker? What Challenges Does it Solve?
 

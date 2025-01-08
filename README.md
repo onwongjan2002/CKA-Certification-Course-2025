@@ -4,6 +4,9 @@
 
 This repository is your one-stop shop for all the code examples, Dockerfiles, and resources you'll need throughout the course. Whether you're a beginner or looking to brush up your skills, you're in the right place to master Docker 🐳 and Kubernetes ☸️.
 
+### 📺 YouTube Playlist for this Course  
+👉 [CKA Certification Course 2025 Playlist](https://www.youtube.com/playlist?list=PLmPit9IIdzwRjqD-l_sZBDdPlcSfKqpAt)
+
 ## What You'll Find in This Repository
 
 * **Organized Content by Days:** Learn at your own pace with a structured curriculum.

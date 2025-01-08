@@ -2,7 +2,7 @@
 
 ## Video reference for Day 2 is the following:
 
-[![Day 2: Write Your First Dockerfile, and Push to Docker Hub](https://img.youtube.com/vi/p8VQmk_zbVo/1.jpg)](https://www.youtube.com/watch?v=p8VQmk_zbVo)
+[![Watch the video](https://img.youtube.com/vi/YVq-3UWt63U/maxresdefault.jpg)](https://youtu.be/YVq-3UWt63U)
 
 ## Understanding "docker pull ubuntu"
 

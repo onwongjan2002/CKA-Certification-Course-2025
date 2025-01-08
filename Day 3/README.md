@@ -2,7 +2,7 @@
 
 ## Video reference for Day 3 is the following:
 
-[![Day 3: Docker Flags, Deep Dive into Dockerfile, and Exposing Containers](https://img.youtube.com/vi/p8VQmk_zbVo/1.jpg)](https://www.youtube.com/watch?v=p8VQmk_zbVo)
+[![Watch the video](https://img.youtube.com/vi/MQ8fYqZwiQs/maxresdefault.jpg)](https://youtu.be/MQ8fYqZwiQs)
 
 
 ### Important Docker Flags
