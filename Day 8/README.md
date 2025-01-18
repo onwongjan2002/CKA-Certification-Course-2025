@@ -5,8 +5,12 @@
 [![Watch the video](https://img.youtube.com/vi/wBF3YCMgZ7U/maxresdefault.jpg)](https://youtu.be/wBF3YCMgZ7U)
 
 
-Documentation for [Kubectl Installation ](https://kubernetes.io/docs/tasks/tools/). 
-Documentation for [Kind Cluster Installation ](https://kind.sigs.k8s.io/docs/user/quick-start/). 
+
+### Important Installation links:
+
+- Documentation for [Kubectl Installation ](https://kubernetes.io/docs/tasks/tools/). 
+- Documentation for [Kind Cluster Installation ](https://kind.sigs.k8s.io/docs/user/quick-start/). 
+---
 
 # What We Did
 
@@ -63,6 +67,7 @@ nodes:
 - **Kind** assigns the **same name** to the user and context as the cluster name, which might seem confusing at times. 
 - In production environments, these names are typically **distinct** to avoid confusion.
 - I’ll make a note to demonstrate this difference when we set up clusters using **kubeadm**.
+---
 
 # Managing Kubernetes Contexts for Multiple Clusters
 
