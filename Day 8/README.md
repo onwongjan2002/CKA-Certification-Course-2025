@@ -5,6 +5,9 @@
 [![Watch the video](https://img.youtube.com/vi/wBF3YCMgZ7U/maxresdefault.jpg)](https://youtu.be/wBF3YCMgZ7U)
 
 
+Documentation for [Kubectl Installation ](https://kubernetes.io/docs/tasks/tools/). 
+Documentation for [Kind Cluster Installation ](https://kind.sigs.k8s.io/docs/user/quick-start/). 
+
 # What We Did
 
 We executed the command from the CLI to create Kubernetes clusters using **Kind** in both scenarios. Below are the key differences:
@@ -14,6 +17,23 @@ We executed the command from the CLI to create Kubernetes clusters using **Kind*
   ```bash
   kind create cluster --name my-first-cluster --config kind-cluster.yaml
   ```
+  Here is **kind-cluster.yaml**
+
+```yaml
+# kind-cluster-config.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+
+# Specify the Kubernetes version by using a specific node image
+# Visit https://hub.docker.com/r/kindest/node/tags and https://github.com/kubernetes-sigs/kind/releases for available images
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.31.4@sha256:2cb39f7295fe7eafee0842b1052a599a4fb0f8bcf3f83d96c7f4864c357c6c30 # Replace with the Kubernetes version you want
+  - role: worker
+    image: kindest/node:v1.31.4@sha256:2cb39f7295fe7eafee0842b1052a599a4fb0f8bcf3f83d96c7f4864c357c6c30
+  - role: worker
+    image: kindest/node:v1.31.4@sha256:2cb39f7295fe7eafee0842b1052a599a4fb0f8bcf3f83d96c7f4864c357c6c30
+```
   A **configuration file** was used to define the cluster setup, including:
   - **Image Version** 
   - **Number of Nodes**
