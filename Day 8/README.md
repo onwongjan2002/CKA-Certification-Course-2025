@@ -8,8 +8,8 @@
 
 # Important Installation links:
 
-- Documentation for [Kubectl Installation ](https://kubernetes.io/docs/tasks/tools/). 
-- Documentation for [Kind Cluster Installation ](https://kind.sigs.k8s.io/docs/user/quick-start/). 
+- Documentation for [Kubectl Installation ](https://kubernetes.io/docs/tasks/tools/)
+- Documentation for [Kind Cluster Installation ](https://kind.sigs.k8s.io/docs/user/quick-start/)
 ---
 
 # What We Did
@@ -48,7 +48,7 @@ nodes:
   - Configuration files can be **shared across teams**, promoting collaboration and standardization.
   - They provide a **single source of truth** for cluster configurations, reducing the risk of discrepancies or errors during manual setup.
   
-- This approach holds true not only for **Kind** but also for other **DevOps tools** like Terraform, Ansible, Helm, and Kubernetes itself, which rely heavily on manifest/configuration files to define infrastructure and deployments.
+- **IMPORTANT** This approach is not limited to **Kind** but is also widely applicable to other **DevOps tools** like Terraform, Ansible, Helm, and Kubernetes, which heavily rely on manifest or configuration files to define infrastructure and deployments. Administrators often prefer **YAML** for its flexibility, readability, and ease of use, although many of these tools also support other formats, such as **JSON**, to accommodate various use cases.
 
 ## Second Scenario: *my-second-cluster*
 - The cluster was created using the following command:
@@ -66,12 +66,12 @@ nodes:
 ## Important Note About Naming in Kind
 - **Kind** assigns the **same name** to the user and context as the cluster name, which might seem confusing at times. 
 - In production environments, these names are typically **distinct** to avoid confusion.
-- I’ll make a note to demonstrate this difference when we set up clusters using **kubeadm**.
+- Although the next section will explain this concept theoretically, I’ll ensure to demonstrate this difference practically when we set up clusters using **kubeadm**.
 ---
 
 # Managing Kubernetes Contexts for Multiple Clusters
 
-Kubernetes contexts allow users to easily manage multiple clusters and namespaces by storing cluster, user, and namespace information in the `kubeconfig` file. Each context defines a combination of a cluster, a user, and a namespace, making it simple for users like Varun to switch between clusters and namespaces seamlessly without manually changing the configuration each time.
+**Kubernetes contexts** allow users to easily manage multiple clusters and namespaces by storing cluster, user, and namespace information in the `kubeconfig` file. Each context defines a combination of a cluster, a user, and a namespace, making it simple for users like `Varun` to switch between clusters and namespaces seamlessly without manually changing the configuration each time.
 
 ## Scenario:
 
@@ -96,6 +96,10 @@ In the `kubeconfig` file, each cluster, user, and namespace combination is store
 ### 2. Switching Between Contexts:
 
 With Kubernetes contexts configured, Varun can easily switch between them. If he needs to work on **Cluster 1**, he can switch to the `dev-context`. Similarly, for **Cluster 2**, he switches to `staging-context`, and for **Cluster 3**, the `prod-context`.
+
+A **Kubernetes namespace** is a virtual cluster within a physical cluster that provides logical segregation for resources, enabling multiple environments (e.g., dev, staging, prod) to coexist on the same cluster. 
+
+For example, in a cluster running multiple applications, each application can run in its own namespace, ensuring isolation and avoiding conflicts between resources like services or pods.
 
 **NOTE:** I’ve included the namespace section here for completeness. We’ll dive deeper into working with namespaces later in the course.
 
@@ -166,6 +170,18 @@ When Varun switches contexts, he can also set the default namespace. For example
 
 ```Bash
 kubectl get pods --namespace=dev  # Override the default namespace for a command
+```
+
+**Setting a Default Namespace with `kubectl config`**
+
+To streamline working with Kubernetes, you can set a **default namespace** for a specific context using the `kubectl config` command. This eliminates the need to specify the `--namespace` flag in every command.  
+
+**Example: Setting a Default Namespace for Varun**
+
+Imagine Varun is working with the **dev cluster** and wants to set the default namespace to `app1-ns`. This can be achieved with the following command:  
+
+```bash
+kubectl config set-context --current --namespace=app1-ns
 ```
 **Keep current-context Updated:**
 
