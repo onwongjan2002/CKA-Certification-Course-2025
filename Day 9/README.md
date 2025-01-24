@@ -46,7 +46,7 @@ There are two fundamental approaches to system configuration:
 - It's widely used in DevOps tools like Kubernetes, Terraform, Helm, Ansible, and Prometheus.
 - **Key Characteristics**:
   - **Simple**: Easy to read and write, making it user-friendly.
-  - **Data Serialization**: In the context of YAML, **data serialization** refers to the process of **converting** complex data structures (like objects, arrays, and nested combinations of these) into a **human-readable and machine-parsable format**.
+  - **Data Serialization**: In the context of YAML, **data serialization** refers to the process of **converting** complex data structures (like Dictionaries, Lists, and nested combinations of these) into a **human-readable and machine-parsable format**.
 
 **NOTE:** The full form **"YAML Ain't Markup Language"** highlights YAML's simplicity and difference from traditional markup languages like XML, which use verbose tags (`<`, `>`). It focuses on data serialization rather than document formatting and uses a playful recursive acronym to emphasize its lightweight, human-readable design.
 
@@ -75,6 +75,14 @@ You can clearly observe the **simplicity** and **readability** of YAML in the sn
 In YAML, data is primarily represented as **key-value pairs**, where each `key` is associated with a `value`. The `value` assigned to a `key` determines the data type it represents. The `value` can be a scalar, a list, or another dictionary. These data types include:
 
 - **Scalars**: Single values such as strings, integers, floats, booleans, and null.
+  - **Strings**: A sequence of characters used to represent text. In YAML, strings don't need to be enclosed in single (`'`) or double (`"`) quotes. However, using quotes can improve readability, especially for strings that contain special characters or spaces (e.g., `Hello, World!` or `"Hello, World!"`).
+
+  - **Integers**: Whole numbers without a fractional part (e.g., 42, -7).  
+  - **Floats**: Numbers with a decimal point, representing fractional values (e.g., 3.14, -0.5).  
+  - **Booleans**: Logical values representing truth or falsehood, written as true or false in YAML.  
+  - **Null**: A special value representing the absence of a value or "nothing," written as null in YAML.  
+
+
 - **Lists**: Ordered collections of items, represented by a series of values prefixed with hyphens (`-`).
 - **Dictionaries (Maps)**: Unordered collections of key-value pairs, allowing for nested structures.
 
@@ -203,21 +211,21 @@ work_experience:  # **List with Nested Dictionary**
 ```
 **Dictionary with Nested List** Example:
 
-- `education` is a dictionary with a nested list.
-- The key `degrees` in the dictionary contains a **list** with 2 items.
-- Each item in the list is a **dictionary**.
-- Each dictionary has 2 key-value pairs:
-  - `degree: value`
-  - `field: value`
+- `education` is a **key** whose value is a dictionary with a nested list.  
+- The key `degrees` in the dictionary contains a list with 2 items.  
+- Each item in the list is a dictionary.  
+- Each dictionary has 2 key-value pairs:  
+  - `degree`: value  
+  - `field`: value  
 
 
 **List with Nested Dictionary** Example:
-- `work_experience` is a list with 2 items.
-- Each item in the list is a dictionary.
-- Each dictionary has 3 key-value pairs:
-  - `company: value`
-  - `role: value`
-  - `duration: value`
+- `work_experience` is a **key** whose value is a **list** with 2 items.  
+- Each item in the list is a **dictionary**.  
+- Each dictionary contains **3 key-value pairs**:  
+  - `company: value`  
+  - `role: value`  
+  - `duration: value`  
 
 
 ---
@@ -251,31 +259,28 @@ work_experience:  # **List with Nested Dictionary**
   - `containers` section defines the containers that will run within the Pod.
   - Each container has its own `name`, `image`, and potentially `ports`.
 
+
 - **YAML Explanation**:
+  - `apiVersion` is a **key** with a **string scalar** value (`v1`).  
+  - `kind` is a **key** with a **string scalar** value (`Pod`).  
+  - `metadata` is a **key** whose value is a **dictionary** containing:  
+    - `name`: A **key** with a **string scalar** value (`my-pod-2`).  
+    - `labels`: A **key** with a **nested dictionary** containing:  
+      - `app`: A **key** with a **string scalar** value (`nginx`).  
+      - `environment`: A **key** with a **string scalar** value (`development`).  
+  - `spec` is a **key** whose value is a **dictionary** containing:  
+    - `containers`: A **key** with a **list** containing 2 items.  
+      - The first item is a **dictionary** with:  
+        - `name`: A **key** with a **string scalar** value (`nginx-container`).  
+        - `image`: A **key** with a **string scalar** value (`nginx`).  
+        - `ports`: A **key** with a **nested list** containing:  
+          - An item that is a **dictionary** with:  
+            - `containerPort`: A **key** with an **integer scalar** value (`80`).  
+      - The second item is a **dictionary** with:  
+        - `name`: A **key** with a **string scalar** value (`sidecar-container`).  
+        - `image`: A **key** with a **string scalar** value (`busybox`).  
+        - `args`: A **key** with a **nested list** containing 2 string scalar values (`"sleep"`, `"3600"`).  
 
-  1. **Key: `spec`**
-     - The top-level key in this structure.
-     - **Value**: A dictionary.
-
-  2. Inside the dictionary:
-     - **Key: `containers`**
-       - Represents a list of containers.
-       - **Value**: A list with 2 items.
-
-  3. The `containers` list contains 2 items, each of which is a dictionary:
-
-      - **Item 1**:
-        - **Key: `name`** → Specifies the container's name (e.g., `nginx-container`).
-        - **Key: `image`** → Specifies the container's image (e.g., `nginx`).
-        - **Key: `ports`** → Represents a list of port mappings for the container.
-          - **Value**: A list containing a dictionary with:
-            - **Key: `containerPort`** → Defines the port number exposed by the container (e.g., `80`).
-
-      - **Item 2**:
-        - **Key: `name`** → Specifies the container's name (e.g., `sidecar-container`).
-        - **Key: `image`** → Specifies the container's image (e.g., `busybox`).
-        - **Key: `args`** → Represents a list of arguments passed to the container.
-          - **Value**: A list containing two string elements (e.g., `["sleep", "3600"]`).
 
 ---
 
@@ -304,8 +309,9 @@ These terms all refer to the same concept of defining and managing Kubernetes re
 - View Pod logs: `kubectl logs <pod-name>`  
 - View logs for a specific container: `kubectl logs <pod-name> -c <container-name>`  
 - Stream live Pod logs: `kubectl logs -f <pod-name>`
-- Delete a Pod: `kubectl delete pod <pod-name>` 
-- Execute a command in a Pod: `kubectl exec -it <pod-name> -- /bin/bash`   
+- Execute a command in a Pod: `kubectl exec -it <pod-name> -- /bin/bash`
+- Execute a command in a specific container: `kubectl exec -it <pod-name> -c <container-name> -- /bin/bash`  
+- Delete a Pod: `kubectl delete pod <pod-name>`  
   
 
 
