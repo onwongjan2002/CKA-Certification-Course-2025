@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:     # Dictionary
+  name: my-pod-2
+  labels:  # Nested Dictionary
+    app: nginx
+    environment: development
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx
+      ports:
+        - containerPort: 80
+
+
