@@ -2,7 +2,7 @@
 
 ## Video reference for Day 9 is the following:
 
-[![Watch the video](https://img.youtube.com/vi/r3QWVLeA5qM/maxresdefault.jpg)](https://youtu.be/r3QWVLeA5qM)
+[![Watch the video](https://img.youtube.com/vi/LT3U9fkOVDQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=LT3U9fkOVDQ&ab_channel=CloudWithVarJosh)
 
 ---
 ## Imperative vs. Declarative
