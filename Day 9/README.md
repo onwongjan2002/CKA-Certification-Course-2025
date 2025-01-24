@@ -43,6 +43,8 @@ There are two fundamental approaches to system configuration:
 ## Introduction to YAML
 
 - **YAML** (YAML Ain't Markup Language) is a human-readable data serialization language.
+- In YAML, **indentation** is used to denote structure and hierarchy, typically with spaces (not tabs). **Line breaks** are used to separate different elements, such as key-value pairs, lists, and nested structures, ensuring readability and clarity.
+
 - It's widely used in DevOps tools like Kubernetes, Terraform, Helm, Ansible, and Prometheus.
 - **Key Characteristics**:
   - **Simple**: Easy to read and write, making it user-friendly.
