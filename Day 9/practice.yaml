@@ -1,0 +1,89 @@
+first_name: Prakash
+height: 6.2
+roll_number: 9
+is_student: true
+address: null
+hobbies:
+  - singing
+  - dancing
+
+--- 
+
+first_name: Prakash # String scalar
+height: 5.9 # Float scalar
+roll_number: 9 # Integer scalar
+is_engineer: true # Boolean scalar
+pending_dues: null # Null scalar
+address:       # Dictionary
+  flat_number: x-001
+  street: that_street
+  state: that_state
+  country: that_country
+hobbies:      # List
+  - singing
+  - traveling
+  - dancing
+
+---
+first_name: Prakash # String scalar
+height: 5.9 # Float scalar
+roll_number: 9 # Integer scalar
+is_engineer: true # Boolean scalar
+pending_dues: null # Null scalar
+address:       # Dictionary
+  flat_number: x-001
+  street: that_street
+  state: that_state
+  country: that_country
+  contact: # **Nested dictionary**
+    phone: 000111222
+    email: prakash@example.com
+hobbies:      # list
+  - singing
+  - traveling
+  - dancing
+  - sports:  # **Nested List**
+      - cricket
+      - football
+
+---
+
+first_name: Prakash # String scalar
+height: 5.9 # Float scalar
+roll_number: 9 # Integer scalar
+is_engineer: true # Boolean scalar
+pending_dues: null # Null scalar
+address:       # Dictionary
+  flat_number: x-001
+  street: that_street
+  state: that_state
+  country: that_country
+  contact: # nested dictionary
+    phone: 000111222
+    email: prakash@example.com
+hobbies:      # list
+  - singing
+  - traveling
+  - dancing
+  - sports:  # Nested list
+      - cricket
+      - football
+education:    # **Dictionary with Nested List**
+  degrees:
+    - degree: Bachelors
+      field: Computer Science
+    - degree: Masters
+      field: Data Science
+work_experience:  # **List with Nested Dictionary**
+  - company: ABC Corp
+    role: Software Engineer
+    duration: 3 years
+  - company: XYZ Inc
+    role: Data Scientist
+    duration: 2 years
+
+
+---
+
+
+
