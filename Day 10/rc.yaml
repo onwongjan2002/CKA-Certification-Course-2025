@@ -8,11 +8,10 @@ spec:
     app: nginx
   template:
     metadata:
-      name: nginx-pod
       labels:
         app: nginx
         environment: development
     spec:
       containers:
-        - name: nginx-cont
-          image: nginx
+        - name: nginx-container
+          image: nginx 

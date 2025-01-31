@@ -5,12 +5,16 @@ metadata:
 spec:
   replicas: 3
   selector:
-    matchLabels:
-      app: nginx
+    matchExpressions:
+      - key: app
+        operator: In
+        values: 
+          - nginx
+          - apache
   template:
     metadata:
       labels:
-        app: nginx
+        app: apache
         environment: development
     spec:
       containers:
