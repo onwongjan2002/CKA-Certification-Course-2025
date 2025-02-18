@@ -2,7 +2,8 @@
 
 ## Video reference for Day 11 is the following:
 
-[![Watch the video](https://img.youtube.com/vi/YXIUZgd6vbY/maxresdefault.jpg)](https://www.youtube.com/watch?v=YXIUZgd6vbY&ab_channel=CloudWithVarJosh)
+[![Watch the video](https://img.youtube.com/vi/waJ8brXMtYg/maxresdefault.jpg)](https://www.youtube.com/watch?v=waJ8brXMtYg&ab_channel=CloudWithVarJosh)
+
 
 # **Understanding Frontend, Backend, Middleware, and the Three-Tier Architecture**  
 
