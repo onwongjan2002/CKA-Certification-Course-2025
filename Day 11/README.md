@@ -10,6 +10,19 @@
 
 A **three-tier architecture** is a common software design pattern that separates applications into **three logical layers** to improve scalability, maintainability, and separation of concerns.  
 
+### Monolithic Architecture  
+
+![Alt text](/images/11c.png)
+
+Before moving to **3-tier architecture**, let's understand **monolithic design**, where everything existed as a **single codebase**.  
+
+A **monolithic application** is a **self-contained, tightly integrated** system where the **UI, business logic, and database** are part of a **single deployment unit**. While simple to develop initially, it becomes **harder to scale, update, and maintain** as the application grows.  
+
+**Challenges with Monolithic Design**
+1. **Tightly Coupled Systems:** Components (UI, business logic, database) were tightly coupled, making changes risky and prone to breaking other parts.  
+2. **Difficult Maintenance and Upgrades:** Fixes or upgrades required changes to the entire application, causing downtime and complex testing.  
+3. **Limited Scalability:** Scaling required scaling the entire system, leading to inefficient resource use and bottlenecks.  
+4. **Lack of Flexibility in Development:** Development was slower due to dependencies across components, making changes prone to errors.
 ---
 
 ## **1. Three-Tier Architecture Overview**  
@@ -62,16 +75,6 @@ The **database** stores, manages, and retrieves structured or unstructured data.
 - **User Database** stores account details.  
 - **Product Database** stores items, prices, and availability.  
 - **Order History Database** keeps track of past purchases. 
-
-## **Why a 3-Tier Design?**  
-
-Before diving into the **three-tier architecture**, it's important to understand **how applications were traditionally deployed** and why the industry shifted to this model.
-
-Challenges when applications were deployed as a whole:
-1. **Tightly Coupled Systems:** Components (UI, business logic, database) were tightly coupled, making changes risky and prone to breaking other parts.  
-2. **Difficult Maintenance and Upgrades:** Fixes or upgrades required changes to the entire application, causing downtime and complex testing.  
-3. **Limited Scalability:** Scaling required scaling the entire system, leading to inefficient resource use and bottlenecks.  
-4. **Lack of Flexibility in Development:** Development was slower due to dependencies across components, making changes prone to errors.
 
 ---
 ### 3-Tier Deployment Models
