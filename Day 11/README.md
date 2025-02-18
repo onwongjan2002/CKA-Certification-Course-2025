@@ -2,9 +2,7 @@
 
 ## Video reference for Day 11 is the following:
 
-[![Watch the video](https://img.youtube.com/vi/5-3_J-jQAVY/maxresdefault.jpg)](https://www.youtube.com/watch?v=5-3_J-jQAVY&ab_channel=CloudWithVarJosh)
-
-
+[![Watch the video](https://img.youtube.com/vi/YXIUZgd6vbY/maxresdefault.jpg)](https://www.youtube.com/watch?v=YXIUZgd6vbY&ab_channel=CloudWithVarJosh)
 
 # **Understanding Frontend, Backend, Middleware, and the Three-Tier Architecture**  
 
@@ -14,15 +12,18 @@ A **three-tier architecture** is a common software design pattern that separates
 
 ![Alt text](/images/11c.png)
 
-Before moving to **3-tier architecture**, let's understand **monolithic design**, where everything existed as a **single codebase**.  
+Before moving to **3-tier architecture**, let's understand **monolithic design**, where everything existed as a **single codebase**.
 
 A **monolithic application** is a **self-contained, tightly integrated** system where the **UI, business logic, and database** are part of a **single deployment unit**. While simple to develop initially, it becomes **harder to scale, update, and maintain** as the application grows.  
+
+Modern applications **typically avoid** monolithic or single codebase designs, but you may still encounter them in **legacy systems** that have not been refactored into modular architectures.
 
 **Challenges with Monolithic Design**
 1. **Tightly Coupled Systems:** Components (UI, business logic, database) were tightly coupled, making changes risky and prone to breaking other parts.  
 2. **Difficult Maintenance and Upgrades:** Fixes or upgrades required changes to the entire application, causing downtime and complex testing.  
 3. **Limited Scalability:** Scaling required scaling the entire system, leading to inefficient resource use and bottlenecks.  
 4. **Lack of Flexibility in Development:** Development was slower due to dependencies across components, making changes prone to errors.
+
 ---
 
 ## **1. Three-Tier Architecture Overview**  
