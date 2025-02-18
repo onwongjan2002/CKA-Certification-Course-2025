@@ -212,11 +212,20 @@ The **database tier** stores, manages, and retrieves structured or unstructured 
 - **Cloud-Managed Database Services** (e.g., AWS RDS, Google Cloud SQL) – Fully managed with automated scaling and backups.  
 - **Dedicated Virtual Machines (VMs) with HA Configurations** – Gives full control over performance tuning.  
 - **Hybrid Approach** – Applications run in **Kubernetes**, while databases are hosted externally.  
+- **StatefulSets** can be used to deploy **databases** onto Kubernetes.  
+**StatefulSets** in Kubernetes manage **stateful applications** that need stable network identities, persistent storage, and ordered deployment. Unlike **Deployments**, StatefulSets ensure each pod gets a **unique, persistent identity** across restarts.  
+  - **Common Use Cases:**  
+    - Databases like **MySQL** and **PostgreSQL**  
+    - Distributed systems like **Kafka** and **Zookeeper**  
 
 ### **When Would You Run a Database in Kubernetes?**  
 - For **development or testing** where persistence isn't critical.  
 - If using **Kubernetes-native database operators** (e.g., MySQL Operator, PostgreSQL Operator). We will discuss Operators later in the course.
-- For small-scale, **self-managed** deployments with lower operational complexity.  
+  - A **Kubernetes Operator** is a custom controller that automates the deployment, scaling, and management of complex applications on Kubernetes. It extends Kubernetes capabilities by encoding human operational knowledge into software, enabling self-healing and lifecycle management of applications.
+- For small-scale, **self-managed** deployments with lower operational complexity. 
+
+
+
 
 ---
 
@@ -235,8 +244,11 @@ The **database tier** stores, manages, and retrieves structured or unstructured 
 
 ---
 
-# **6. Summary**  
+# **6. Reference Links**  
+- Microservices Explained: [https://aws.amazon.com/microservices/](https://aws.amazon.com/microservices/)  
 
-- **Three-Tier Architecture** separates frontend, middleware, backend, and database layers.  
-- **Microservices Architecture** improves scalability, fault isolation, and maintainability.  
-- **Each tier can have multiple microservices**, with each service running as a **separate Kubernetes Deployment**.  
+- What are Kubernetes Operators?: [https://kubernetes.io/docs/concepts/extend-kubernetes/operator/](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)  
+
+- What is an API Gateway?: [https://www.nginx.com/resources/glossary/api-gateway/](https://www.nginx.com/resources/glossary/api-gateway/)  
+- API Gateway in Microservices: [https://microservices.io/patterns/apigateway.html](https://microservices.io/patterns/apigateway.html)  
+  
