@@ -2,10 +2,8 @@
 
 ## Video reference for Day 11 is the following:
 
-[![Watch the video](https://img.youtube.com/vi/_YNBhQGMut4/maxresdefault.jpg)](https://www.youtube.com/watch?v=_YNBhQGMut4&ab_channel=CloudWithVarJosh)
+[![Watch the video](https://img.youtube.com/vi/92NB8oQBtnc/maxresdefault.jpg)](https://www.youtube.com/watch?v=92NB8oQBtnc&ab_channel=CloudWithVarJosh)
 
-
-![Alt text](/images/10a.png)
 
 # Table of Contents
 
@@ -335,6 +333,13 @@ User → Building-2 Front Desk (NodePort) → Extension 10 (ClusterIP) → HR (P
 - **Built on ClusterIP** – Internally, a **NodePort service forwards requests to a ClusterIP service**, which then routes traffic to the correct pod.  
 - **Fixed Port Range (30000-32767)** – NodePort services use a **predefined range** to avoid conflicts with system and ephemeral ports. This range is configurable, but it’s **best practice** to keep it unchanged unless necessary.  
 
+**Note:**
+With both **NodePort** and **LoadBalancer services** (to be discussed later), you can **choose not to explicitly specify the NodePort** in your **YAML manifest**. If you **omit the `nodePort` field**, **Kubernetes** will **automatically assign a port** from the **default NodePort range (30000-32767)**.  
+
+However, in this course, I have **explicitly defined the NodePort as `31000`** in **all examples**. This is because we are using a **KIND (Kubernetes IN Docker) cluster**, and our **KIND configuration** only **exposes port 31000** to the **host machine**. This configuration ensures that **external access works consistently** and **avoids potential port conflicts**.  
+
+By **manually specifying the port**, we maintain **control and predictability** over the **service exposure**, which is especially **important for learning environments** and **local testing scenarios**.
+
 
 ### **Exposing a Frontend Application Using a NodePort Service**  
 
@@ -593,6 +598,9 @@ Internal Call → IT Support 111 (ExternalName) → IT Support (External Service
 - This **separates configuration from application logic**, ensuring **easier maintenance** and **flexibility**.  
 
 
-References
-https://kind.sigs.k8s.io/docs/user/configuration/#extra-port-mappings
+## **References**  
+
+- [KIND Extra Port Mappings](https://kind.sigs.k8s.io/docs/user/configuration/#extra-port-mappings)  
+- [Kubernetes Services Documentation](https://kubernetes.io/docs/concepts/services-networking/service/)  
+
 
