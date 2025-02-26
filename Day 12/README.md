@@ -589,11 +589,10 @@ Internal Call → IT Support 111 (ExternalName) → IT Support (External Service
 
 ## **Key Takeaways:**  
 
-1. **ClusterIP:** Allows **internal-only communication** between pods.  
-2. **NodePort:** Adds **external access** through a **specific port on each node's IP**, but requires **manual switching** if a **node goes down**.  
-3. **LoadBalancer:** Provides a **single public IP** with **automatic load balancing**, ideal for **production environments**.  
-4. **ExternalName:** Offers a **simple alias** to connect **internal services to external resources** using **DNS names**.  
-
+- **ClusterIP:** Allows **internal-only communication** between pods.  
+- **NodePort:** Adds **external access** through a **specific port on each node's IP**, but requires **manual switching** if a **node goes down**.  
+- **LoadBalancer:** Provides a **single public IP** with **automatic load balancing**, ideal for **production environments**.  
+- **ExternalName:** Offers a **simple alias** to connect **internal services to external resources** using **DNS names**.  
 - When using **ExternalName**, applications **connect to services using internal DNS names**, and **Kubernetes handles the external redirection**.  
 - This **separates configuration from application logic**, ensuring **easier maintenance** and **flexibility**.  
 
