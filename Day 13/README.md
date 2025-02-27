@@ -2,21 +2,14 @@
 
 ## Video reference for Day 13 is the following:
 
-[![Watch the video](https://img.youtube.com/vi/_YNBhQGMut4/maxresdefault.jpg)](https://www.youtube.com/watch?v=_YNBhQGMut4&ab_channel=CloudWithVarJosh)
-
-
-![Alt text](/images/10a.png)
-
-# **Day 13: Imperative Commands for Pods, Deployments, and Services | CKA Course 2025**  
-
----
+[![Watch the video](https://img.youtube.com/vi/ZDFqVFbX0Ic/maxresdefault.jpg)](https://www.youtube.com/watch?v=ZDFqVFbX0Ic&ab_channel=CloudWithVarJosh)
 
 ## **Table of Contents**  
 - [Why Are Imperative Commands Important?](#why-are-imperative-commands-important)  
 - [Imperative Commands for Backend Deployment and Service](#imperative-commands-for-backend-deployment-and-service)  
 - [Imperative Commands for Frontend Deployment and Service](#imperative-commands-for-frontend-deployment-and-service)  
 - [Creating Test Pods Imperatively](#creating-test-pods-imperatively)  
-- [Key Takeaways](#key-takeaways)  
+- [Key Takeaways](#key-takeaways) 
 
 ---
 
@@ -51,7 +44,7 @@ kubectl create deployment backend-deploy \
 - **`--image`**: Specifies the **container image** (`hashicorp/http-echo`).  
 - **`--replicas`**: Defines **3 replicas** for **high availability**.  
 - **`--port`**: The **port on which the container listens** (**5678**).  
-- **`--dry-run=client`**: Validates and **outputs the manifest** to **backend-deploy.yaml**.  
+- **`--dry-run=client`**: Validates and **outputs the manifest** (because of the `-o yaml` part) to **backend-deploy.yaml**.  
 
 ---
 
@@ -73,7 +66,7 @@ kubectl expose deployment backend-deploy \
 
 ---
 
-### **Manual Step:**  
+### **Manual Steps:**  
 
 - Add the **YAML separator** (`---`) to **separate the deployment and service objects**.  
 - Edit the labels as needed.
@@ -121,14 +114,14 @@ kubectl expose deployment frontend-deploy \
 
 ---
 
-### **Manual Step: Add NodePort and YAML Separator**  
+### **Manual Steps:**  
 
 - Edit the **service manifest** to **manually add the `nodePort` field**:  
 
-```yaml
-nodePort: 31000
----
-```
+  ```yaml
+  nodePort: 31000
+  ---
+  ```
 - Add the **YAML separator** (`---`) to **separate the deployment and service objects**.  
 - Edit the labels as needed.
 
@@ -152,7 +145,7 @@ kubectl run nginx-pod \
 
 - **`nginx-pod`**: The **name** of the pod.  
 - **`--image=nginx`**: Specifies the **container image** to use.  
-- **`--restart=Never`**: Creates a **pod**, not a **deployment** (since deployments require `Always` as the restart policy).  
+- **`--restart=Never`**: Instructs Kubernetes to **not** restart the pod automatically if it fails. 
 - **`--labels="app=nginx,env=production"`**: Adds **multiple labels** to the **pod** in a **comma-separated key=value format**.  
 
 ### **Verify Labels:**  
