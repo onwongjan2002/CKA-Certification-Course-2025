@@ -1,25 +1,25 @@
-# Day 10: Replication Controller, ReplicaSets, and Deployment | CKA Certification Course 2025
+# Day 14: Kubernetes Namespaces Explained | Isolation & Resource Management | CKA Course 2025
 
-## Video reference for Day 10 is the following:
+## Video reference for Day 14 is the following:
 
-[![Watch the video](https://img.youtube.com/vi/_YNBhQGMut4/maxresdefault.jpg)](https://www.youtube.com/watch?v=_YNBhQGMut4&ab_channel=CloudWithVarJosh)
+[![Watch the video](https://img.youtube.com/vi/uDlhbtGy1AU/maxresdefault.jpg)](https://www.youtube.com/watch?v=uDlhbtGy1AU&ab_channel=CloudWithVarJosh)
 
 
-
-## **Table of Contents**
-- **What Are Namespaces in Kubernetes?**
-- **Analogy to Understand Namespaces**
-- **Why Use Namespaces?**
-- **Default Namespaces in Kubernetes**
-- **Working with Namespaces**
-  - Imperative and Declarative Creation
-  - Commands to List, Create, and Delete Namespaces
-  - Using `-n`, `-A`, and `--all-namespaces` Flags
-- **Deploying Frontend and Backend in a Namespace**
-- **Testing Namespace Isolation**
-- **Setting a Default Namespace in the Kubernetes Context**
-- **Best Practices for Using Namespaces**
-- **Additional Tips and Considerations**
+## Table of Contents
+- [What Are Namespaces in Kubernetes?](#what-are-namespaces-in-kubernetes)
+- [Analogy to Understand Namespaces](#analogy-to-understand-namespaces)
+- [Why Use Namespaces?](#why-use-namespaces)
+- [Default Namespaces in Kubernetes](#default-namespaces-in-kubernetes)
+- [Working with Namespaces](#working-with-namespaces)
+  - [Imperative and Declarative Creation](#imperative-and-declarative-creation)
+  - [Commands to List, Create, and Delete Namespaces](#commands-to-list-create-and-delete-namespaces)
+  - [Using `-n`, `-A`, and `--all-namespaces` Flags](#using-n-a-and--all-namespaces-flags)
+- [Deploying Frontend and Backend in a Namespace](#deploying-frontend-and-backend-in-a-namespace)
+- [Testing Namespace Isolation](#testing-namespace-isolation)
+- [Setting a Default Namespace in the Kubernetes Context](#setting-a-default-namespace-in-the-kubernetes-context)
+- [Best Practices for Using Namespaces](#best-practices-for-using-namespaces)
+- [Summary](#summary)
+- [References](#references)
 
 ---
 
@@ -162,6 +162,23 @@ kubectl run test-pod --image=busybox -it --rm --restart=Never -- /bin/sh
 ```sh
 curl backend-svc:9090 # ❌ Will not work
 ```
+**For cross-namespace access, use the following format:**  
+```sh
+curl http://backend-svc.app1-ns:9090
+```
+
+### ✅ **Format:**  
+```sh
+curl http://<service-name>.<namespace-name>:<service-port>
+```
+
+- **`<service-name>`**: Name of the **Kubernetes Service**, e.g., **`backend-svc`**.  
+- **`<namespace-name>`**: Namespace where the **service** is deployed, e.g., **`app1-ns`**.  
+- **`<service-port>`**: The **ClusterIP port** exposed by the **service**, e.g., **`9090`**.  
+
+
+### 💡 **Coming Up:**  
+In our **DNS resolution lecture**, we'll explore **why this format is needed** and understand **how Kubernetes handles service discovery** within and across **namespaces**.
 
 ---
 
@@ -216,5 +233,5 @@ kubectl config get-contexts
 
 ---
 
-References
-https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+## References  
+- [Kubernetes Namespaces Documentation](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/)
