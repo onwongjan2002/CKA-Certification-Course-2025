@@ -166,7 +166,7 @@ When a **static pod** is created, the **kubelet automatically generates a corres
   ```
 - Example:
   ```
-  nginx-kubelet-my-second-cluster-worker2
+  nginx-static-pod-my-second-cluster-worker2
   ```
 
 ---
@@ -177,13 +177,11 @@ When a **static pod** is created, the **kubelet automatically generates a corres
 
 #### **Step 1: Create a Static Pod YAML File**
 ```sh
-cat <<EOF > /etc/kubernetes/manifests/test.yaml
+cat <<EOF > /etc/kubernetes/manifests/static-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: nginx-kubelet
-  labels:
-    name: nginx
+  name: nginx-static-pod
 spec:
   containers:
     - name: nginx-container
@@ -202,14 +200,14 @@ kubectl get pods -A
 
 ### **Why Can’t You Delete Static Pods Using `kubectl delete`?**  
 ```sh
-kubectl delete pod nginx-kubelet-my-second-cluster-control-plane
+kubectl delete pod nginx-static-pod-my-second-cluster-control-plane
 ```
 🚨 **This won’t work!**  
 Since static pods are managed directly by the Kubelet, they are **recreated automatically** if deleted via `kubectl`.
 
 📌 **To delete a static pod, remove its YAML file:**
 ```sh
-rm /etc/kubernetes/manifests/test.yaml
+rm /etc/kubernetes/manifests/static-pod.yaml
 ```
 
 ---
