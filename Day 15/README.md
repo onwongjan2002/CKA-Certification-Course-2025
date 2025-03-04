@@ -203,7 +203,7 @@ kubectl get pods -A
 kubectl delete pod nginx-static-pod-my-second-cluster-control-plane
 ```
 🚨 **This won’t work!**  
-Since static pods are managed directly by the Kubelet, they are **recreated automatically** if deleted via `kubectl`.
+Since static pods are managed directly by the Kubelet.
 
 📌 **To delete a static pod, remove its YAML file:**
 ```sh
@@ -234,7 +234,7 @@ In a **production Kubernetes cluster**, nodes are typically **virtual machines (
 
 | Feature             | Manual Scheduling | Static Pods |
 |---------------------|------------------|-------------|
-| Created by         | User (via API)   | Kubelet (directly) |
+| Created by         | User (via API Server)   | Kubelet (directly) |
 | Requires API Server | Yes              | No |
 | Managed by Scheduler | No (assigned manually) | No (Kubelet manages) |
 | Use Cases          | Testing, debugging, workload placement | Running control plane components, always-on workloads |
