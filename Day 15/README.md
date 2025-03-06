@@ -48,8 +48,8 @@ Before we dive into **manual scheduling** and **static pods**, it's essential to
 
 The **Kubernetes Scheduler** is responsible for **automatically placing pods** on available worker nodes based on factors like:  
 - **Resource availability** (CPU, memory).  
-- **Taints and tolerations** (node restrictions).  
-- **Affinity and anti-affinity rules**.  
+- **Taints and tolerations** (node restrictions, discussed in Day 16).  
+- **Affinity and anti-affinity rules** (Discussed in Day 17).  
 
 However, **can we bypass the scheduler and manually assign pods to nodes?**  
 Yes! This is where **manual scheduling** comes in.
@@ -105,7 +105,11 @@ kubectl get pods -o wide
 ```
 
 #### **Step 5: What Happens If the Node Does Not Exist?**  
-If the specified node is unavailable, the pod will remain in the **Pending** state indefinitely.
+If the specified node is unavailable, the pod will remain in the **Pending** state.
+
+When a Pod specifies a wrong or non-existent `nodeName`, Kubernetes cannot schedule the Pod and it remains in the `Pending` state. Over time, due to resource management and cluster policies, Kubernetes deletes the Pod to avoid resource wastage and maintain cluster efficiency.
+
+**Note:** Kubernetes has a default **garbage collection mechanism** that removes stuck or unschedulable Pods after a certain period.
 
 ---
 
@@ -207,7 +211,7 @@ kubectl get pods -A
 ### **Why Does `kubectl delete` Not Permanently Remove Static Pods?**  
 
 ```sh
-kubectl delete pod nginx-static-pod-my-second-cluster-control-plane
+kubectl delete pods nginx-static-pod-my-second-cluster-control-plane
 ```  
 
 🚨 **This deletes the pod, but it will be recreated!**  
