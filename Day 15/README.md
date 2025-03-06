@@ -1,6 +1,6 @@
 # Day 15: Manual Scheduling & Static Pods | MUST KNOW Concepts | CKA Course 2025
 
-## Video reference for Day 13 is the following:
+## Video reference for Day 15 is the following:
 
 [![Watch the video](https://img.youtube.com/vi/HjKT-lGGs7I/maxresdefault.jpg)](https://www.youtube.com/watch?v=HjKT-lGGs7I&ab_channel=CloudWithVarJosh)
 
