@@ -104,8 +104,7 @@ kubectl apply -f nginx-manual.yaml
 kubectl get pods -o wide
 ```
 
-#### **Step 5: What Happens If the Node Does Not Exist?**  
-If the specified node is unavailable, the pod will remain in the **Pending** state.
+#### **Step 5: What Happens If the Node Does Not Exist?** 
 
 When a Pod specifies a wrong or non-existent `nodeName`, Kubernetes cannot schedule the Pod and it remains in the `Pending` state. Over time, due to resource management and cluster policies, Kubernetes deletes the Pod to avoid resource wastage and maintain cluster efficiency.
 
