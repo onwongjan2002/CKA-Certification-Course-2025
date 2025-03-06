@@ -2,10 +2,11 @@
 
 ## Video reference for Day 13 is the following:
 
-[![Watch the video](https://img.youtube.com/vi/ZDFqVFbX0Ic/maxresdefault.jpg)](https://www.youtube.com/watch?v=ZDFqVFbX0Ic&ab_channel=CloudWithVarJosh)
+[![Watch the video](https://img.youtube.com/vi/HjKT-lGGs7I/maxresdefault.jpg)](https://www.youtube.com/watch?v=HjKT-lGGs7I&ab_channel=CloudWithVarJosh)
 
 
-## **Table of Contents**
+
+## Table of Contents
 - [Prerequisite: Revisiting Kubernetes Deployment Workflow](#prerequisite-revisiting-kubernetes-deployment-workflow)
 - [Understanding the Kubernetes Scheduler](#understanding-the-kubernetes-scheduler)
 - [Manual Scheduling](#manual-scheduling)
@@ -15,16 +16,19 @@
   - [Demonstration: Assigning a Pod to a Node](#demonstration-assigning-a-pod-to-a-node)
   - [Running a Pod on the Control Plane](#running-a-pod-on-the-control-plane)
   - [Why Can KIND Control Plane Run Workloads?](#why-can-kind-control-plane-run-workloads)
-  - [How to Restrict Pods on the Control Plane Node?](#how-to-restrict-pods-on-the-control-plane-node)
+  - [How to Restrict Pods on the Control-Plane Node?](#how-to-restrict-pods-on-the-control-plane-node)
 - [Static Pods](#static-pods)
   - [Why Do We Need Static Pods?](#why-do-we-need-static-pods)
   - [What Are Static Pods?](#what-are-static-pods)
   - [How Are Static Pods Useful?](#how-are-static-pods-useful)
-  - [Accessing the Control Plane in KIND](#accessing-the-control-plane-in-kind)
+  - [Mirror Pods in Kubernetes](#mirror-pods-in-kubernetes)
   - [Demonstration: Creating a Static Pod](#demonstration-creating-a-static-pod)
-  - [Why Can’t You Delete Static Pods Using `kubectl delete`?](#why-cant-you-delete-static-pods-using-kubectl-delete)
+  - [Why Deleting Static Pods via `kubectl` Doesn't Work](#why-deleting-static-pods-via-kubectl-doesnt-work)
+  - [Accessing Static Pods in Production vs. KIND](#accessing-static-pods-in-production-vs-kind)
 - [Key Differences Between Manual Scheduling & Static Pods](#key-differences-between-manual-scheduling--static-pods)
 - [Summary](#summary)
+- [References](#references)
+
 
 ---
 
@@ -39,6 +43,8 @@ Before we dive into **manual scheduling** and **static pods**, it's essential to
 ---
 
 ## **Understanding the Kubernetes Scheduler**  
+
+![Alt text](/images/15a.png)
 
 The **Kubernetes Scheduler** is responsible for **automatically placing pods** on available worker nodes based on factors like:  
 - **Resource availability** (CPU, memory).  
@@ -198,17 +204,20 @@ kubectl get pods -A
 
 ---
 
-### **Why Can’t You Delete Static Pods Using `kubectl delete`?**  
+### **Why Does `kubectl delete` Not Permanently Remove Static Pods?**  
+
 ```sh
 kubectl delete pod nginx-static-pod-my-second-cluster-control-plane
-```
-🚨 **This won’t work!**  
-Since static pods are managed directly by the Kubelet.
+```  
 
-📌 **To delete a static pod, remove its YAML file:**
+🚨 **This deletes the pod, but it will be recreated!**  
+Since static pods are managed directly by the **kubelet**, it detects their absence and automatically **recreates them** if their YAML files still exist.  
+
+📌 **To permanently remove a static pod, delete its manifest file:**  
 ```sh
 rm /etc/kubernetes/manifests/static-pod.yaml
-```
+```  
+Once the YAML file is removed, the **kubelet stops recreating the pod**.
 
 ---
 
