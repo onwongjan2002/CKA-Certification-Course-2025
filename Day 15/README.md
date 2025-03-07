@@ -2,7 +2,8 @@
 
 ## Video reference for Day 15 is the following:
 
-[![Watch the video](https://img.youtube.com/vi/HjKT-lGGs7I/maxresdefault.jpg)](https://www.youtube.com/watch?v=HjKT-lGGs7I&ab_channel=CloudWithVarJosh)
+[![Watch the video](https://img.youtube.com/vi/moZNbHD5Lxg/maxresdefault.jpg)](https://www.youtube.com/watch?v=moZNbHD5Lxg&ab_channel=CloudWithVarJosh)
+
 
 
 
@@ -15,8 +16,7 @@
   - [How is Manual Scheduling Useful?](#how-is-manual-scheduling-useful)
   - [Demonstration: Assigning a Pod to a Node](#demonstration-assigning-a-pod-to-a-node)
   - [Running a Pod on the Control Plane](#running-a-pod-on-the-control-plane)
-  - [Why Can KIND Control Plane Run Workloads?](#why-can-kind-control-plane-run-workloads)
-  - [How to Restrict Pods on the Control-Plane Node?](#how-to-restrict-pods-on-the-control-plane-node)
+  - [How Can Control Plane Run Workloads?](#how-can-control-plane-run-workloads)
 - [Static Pods](#static-pods)
   - [Why Do We Need Static Pods?](#why-do-we-need-static-pods)
   - [What Are Static Pods?](#what-are-static-pods)
@@ -126,19 +126,10 @@ Apply the updated YAML and verify that the **control plane node is running the p
 
 ---
 
-### **Why Can KIND Control Plane Run Workloads?**  
-Unlike production clusters where **control plane nodes are tainted** to prevent scheduling, KIND allows pods to run on the control plane due to:
-- **Kubelet Running on the Control Plane**  
-- **No Default Taints in KIND**  
-- **KIND Creates Single-Node Clusters by Default**  
-
-📌 **We will explore taints and tolerations in detail in later lectures.**
-
-### **How to Restrict Pods on the Control-Plane Node?**  
-To prevent scheduling workloads on the control-plane, apply a taint:  
-```sh
-kubectl taint nodes my-second-cluster-control-plane node-role.kubernetes.io/control-plane=:NoSchedule
-```
+### **How Can Control Plane Run Workloads?**  
+- We know that the **scheduler is bypassed** when performing manual scheduling. This is why, even though the control-plane node has a **taint** that **prevents** workloads from running unless they have a matching **toleration**, we were still able to manually assign a pod to the control-plane node.
+**We will explore this Taints & Tolerations in the next lecture.**
+- The **kubelet** is also installed on control plane nodes, enabling them to run both **static pods and manually scheduled pods**. This is why control plane nodes can execute pods even though scheduling is typically reserved for worker nodes. Additionally, the **kube-proxy** is also running on control plane nodes, facilitating network communication and load balancing for the pods, just as it does on worker nodes.
 
 ---
 
