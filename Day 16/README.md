@@ -1,4 +1,4 @@
-# Day 16: Kubernetes Taints & Tolerations | Essential for Scheduling Control | CKA Course 2025 
+Day 16: Mastering Kubernetes Taints & Tolerations | Essential Scheduling Control | CKA Course 2025
 
 ## Video reference for Day 16 is the following:
 
@@ -123,6 +123,15 @@ tolerations:
 
 ## Demonstration  
 
+### **Cluster Setup for Demonstration**  
+
+Before we begin applying taints and tolerations, let's first review our Kubernetes cluster setup. We have a total of **three nodes** in our KIND cluster:  
+
+1. **my-second-cluster-control-plane** → This is the **control-plane node** responsible for managing the cluster.  
+2. **my-second-cluster-worker** → This is a **worker node** where application workloads can be scheduled.  
+3. **my-second-cluster-worker2** → This is another **worker node** available for scheduling workloads.  
+
+
 ### **Applying Taints**  
 ```sh
 kubectl taint nodes my-second-cluster-worker storage=ssd:NoSchedule
@@ -141,7 +150,53 @@ kubectl run mypod --image=nginx
 kubectl get pods
 kubectl describe pod mypod
 ```
-- The pod **remains in Pending state** because it does **not tolerate any taint**.  
+- The pod **remains in Pending state** because it does **not tolerate any taint**.
+
+### **Why the Pod Is Not Scheduled on the Control Plane Node?**  
+
+After applying taints to our worker nodes, we will attempt to create a pod **without any tolerations** using:  
+
+```sh
+kubectl run mypod --image=nginx
+```
+
+Since **both worker nodes are tainted**, the pod will remain in a **Pending** state. However, it **will not be scheduled on the control plane node either**.  
+
+#### **Checking Why the Pod Is Not Scheduled**  
+
+To investigate, we will describe the pod using:  
+
+```sh
+kubectl describe pod mypod
+```
+
+This will show that **no suitable nodes were found for scheduling** due to the applied taints. Additionally, the **control plane node is already tainted by default**, preventing general workloads from running on it.  
+
+#### **Verifying the Taint on the Control Plane Node**  
+
+We can check the taints applied to the control plane node using:  
+
+```sh
+kubectl describe node my-second-cluster-control-plane | grep Taints
+```
+
+Expected output:  
+
+```plaintext
+Taints: node-role.kubernetes.io/control-plane:NoSchedule
+```
+
+This confirms that the **control plane node has a taint that prevents regular workloads from being scheduled on it** unless the pod has a corresponding toleration.  
+
+### **Why Were We Able to Manually Schedule a Pod on the Control Plane in the Previous Lecture?**  
+
+In the **previous lecture**, we manually scheduled a pod on the control plane node by specifying the `nodeName` field in the pod definition. This **bypasses the Kubernetes scheduler entirely**.  
+
+📌 **Key takeaway:**  
+- **Taints and tolerations affect scheduling decisions made by the scheduler.**  
+- **When using manual scheduling (`nodeName` field), the scheduler is not involved, so taints are ignored.**  
+
+We will now proceed with applying tolerations to allow pods to be scheduled despite the taints.
 
 ### **Scheduling Pods with Tolerations**  
 
@@ -177,10 +232,10 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: myapp
+  name: mypod2
 spec:
   containers:
-  - name: myapp
+  - name: nginx
     image: nginx
   tolerations:
     - key: storage
@@ -215,6 +270,4 @@ tolerations:
 - A **pod can only be scheduled** on a tainted node if it has a **matching toleration**.  
 - **Three effects of taints:** `NoSchedule`, `PreferNoSchedule`, and `NoExecute`.  
 - **Operator `Equal` (default)** requires an exact match, while **`Exists` ignores values**.  
-- **Taints and tolerations work together** to control **pod placement and node access**.  
-
-🚀 **Mastering taints and tolerations is crucial for scheduling control in Kubernetes!**
+- **Taints and tolerations work together** to control **pod placement and node access**.
