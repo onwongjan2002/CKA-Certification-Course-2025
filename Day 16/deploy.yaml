@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: app1-deploy
 spec:
-  replicas: 5
+  replicas: 1
   selector:
     matchLabels:
       app: app1
@@ -18,8 +18,8 @@ spec:
           value: "ssd"
           effect: "NoSchedule"
       containers:
-      - name: nginx
-        image: nginx
+        - name: nginx
+          image: nginx
 
 ---
 
@@ -32,6 +32,6 @@ spec:
   - name: nginx
     image: nginx
   tolerations:
-    - key: "storage"
-      operator: "Exists"
-      effect: "NoSchedule"
+    - key: storage
+      operator: Exists
+      effect: NoSchedule

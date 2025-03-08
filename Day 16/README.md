@@ -1,27 +1,22 @@
-Day 16: Mastering Kubernetes Taints & Tolerations | Essential Scheduling Control | CKA Course 2025
+# Day 16: Mastering Kubernetes Taints & Tolerations | Essential Scheduling Control | CKA Course 2025
 
 ## Video reference for Day 16 is the following:
 
-[![Watch the video](https://img.youtube.com/vi/moZNbHD5Lxg/maxresdefault.jpg)](https://www.youtube.com/watch?v=moZNbHD5Lxg&ab_channel=CloudWithVarJosh)
+[![Watch the video](https://img.youtube.com/vi/G_Ro0urceF0/maxresdefault.jpg)](https://www.youtube.com/watch?v=G_Ro0urceF0&ab_channel=CloudWithVarJosh)  
 
+## Table of Contents
 
-## Table of Contents  
-- [Introduction: Why Taints and Tolerations?](#introduction-why-taints-and-tolerations)  
-- [Understanding Taints](#understanding-taints)  
-  - [How to Apply a Taint](#how-to-apply-a-taint)  
-  - [Effects of a Taint](#effects-of-a-taint)  
-- [Understanding Tolerations](#understanding-tolerations)  
-  - [How to Apply a Toleration](#how-to-apply-a-toleration)  
-  - [Toleration Operators](#toleration-operators)  
-- [How Taints and Tolerations Work Together](#how-taints-and-tolerations-work-together)  
-- [Demonstration](#demonstration)  
-  - [Applying Taints](#applying-taints)  
-  - [Verifying Taints](#verifying-taints)  
-  - [Checking Pod Behavior Without Tolerations](#checking-pod-behavior-without-tolerations)  
-  - [Scheduling Pods with Tolerations](#scheduling-pods-with-tolerations)  
-  - [Using the Exists Operator](#using-the-exists-operator)  
-  - [Applying Multiple Taints and Tolerations](#applying-multiple-taints-and-tolerations)  
-- [Key Takeaways](#key-takeaways)  
+- [Introduction: Why Taints and Tolerations?](#introduction-why-taints-and-tolerations)
+- [When Do We Need Taints & Tolerations?](#when-do-we-need-taints--tolerations)
+- [Understanding Taints](#understanding-taints)
+
+- [Understanding Tolerations](#understanding-tolerations)
+- [How Taints and Tolerations Work Together](#how-taints-and-tolerations-work-together)
+- [Demonstration](#demonstration)
+- [Deleting Taints](#deleting-taints)
+- [Advanced Concepts of Kubernetes Taints & Tolerations](#advanced-concepts-of-kubernetes-taints--tolerations)
+- [Key Takeaways](#key-takeaways)
+- [Reference](#reference)
 
 ---
 
@@ -216,10 +211,10 @@ spec:
         app: app1
     spec:
       tolerations:
-        - key: storage
-          operator: Equal
-          value: ssd
-          effect: NoSchedule
+        - key: "storage"
+          operator: "Equal"
+          value: "ssd"
+          effect: "NoSchedule"
       containers:
         - name: nginx-container
           image: nginx
@@ -238,9 +233,9 @@ spec:
   - name: nginx
     image: nginx
   tolerations:
-    - key: storage
-      operator: Exists
-      effect: NoSchedule
+    - key: "storage"
+      operator: "Exists"
+      effect: "NoSchedule"
 ```
 - This **pod can be placed on either `my-second-cluster-worker` or `my-second-cluster-worker2`**.  
 
@@ -252,15 +247,183 @@ kubectl taint nodes my-second-cluster-worker2 env=dev:NoSchedule
 
 ```yaml
 tolerations:
-  - key: storage
-    operator: Exists
-    effect: NoSchedule
-  - key: env
-    operator: Equal
-    value: prod
-    effect: NoSchedule
+  - key: "storage"
+    operator: "Exists"
+    effect: "NoSchedule"
+  - key: "env"
+    operator: "Equal"
+    value: "prod"
+    effect: "NoSchedule"
 ```
 - This pod tolerates **any `storage` taint** and **only `env=prod:NoSchedule`**.  
+
+---
+
+### **Deleting Taints**  
+
+Once a taint is applied to a node, it restricts pod scheduling based on the taint effect. If you need to **remove a taint** from a node, you can do so using the following syntax:  
+
+```sh
+kubectl taint nodes <node-name> <key>=<value>:<effect>- 
+```
+Here, the **`-` (hyphen) at the end** tells Kubernetes to **remove** the taint.  
+
+#### **Example: Removing a Single Taint**  
+Let's remove the `storage=ssd:NoSchedule` taint from **my-second-cluster-worker**:  
+```sh
+kubectl taint nodes my-second-cluster-worker storage=ssd:NoSchedule-  
+```
+Now, the **ssd taint is removed**, and pods that don’t have the matching toleration can be scheduled on this node.  
+
+#### **Example: Removing All Applied Taints**  
+We previously applied the following taints:  
+```sh
+kubectl taint nodes my-second-cluster-worker storage=ssd:NoSchedule
+kubectl taint nodes my-second-cluster-worker2 storage=hdd:NoSchedule
+kubectl taint nodes my-second-cluster-worker env=prod:NoSchedule
+kubectl taint nodes my-second-cluster-worker2 env=dev:NoSchedule
+```
+To **remove all these taints**, run:  
+```sh
+kubectl taint nodes my-second-cluster-worker storage=ssd:NoSchedule-
+kubectl taint nodes my-second-cluster-worker2 storage=hdd:NoSchedule-
+kubectl taint nodes my-second-cluster-worker env=prod:NoSchedule-
+kubectl taint nodes my-second-cluster-worker2 env=dev:NoSchedule-
+```
+
+#### **Verifying Taint Removal**  
+After deleting the taints, verify that they are removed using:  
+```sh
+kubectl describe node my-second-cluster-worker | grep -i taints
+kubectl describe node my-second-cluster-worker2 | grep -i taints
+```
+If no taints are listed in the output, the nodes are now available to schedule any pod without restrictions.
+
+--- 
+
+# **Advanced Concepts of Kubernetes Taints & Tolerations**  
+
+In Kubernetes, **taints and tolerations** control **where pods can be scheduled**. This analogy will help you **visualize** how these concepts work together with **scheduler preferences**.
+
+---
+
+## **Scenario: A Cluster with Colored Nodes**  
+
+Imagine we have **four nodes** in our Kubernetes cluster, each with different taints and behaviors:  
+
+![Alt text](/images/16a.png)
+
+1. **Green Node** 🟢  
+   - **Taint:** `color=green:NoSchedule`  
+   - **Effect:** Only pods that have a **matching toleration (`color=green`)** can be scheduled here.  
+   - **Current Pods:** **Two green pods** (already running).  
+
+2. **Blue Node** 🔵  
+   - **Taint:** `color=blue:PreferNoSchedule`  
+   - **Effect:** The **scheduler tries to avoid placing pods** here unless necessary.  
+   - **Current Pods:** **One blue pod** (already running).  
+
+3. **Purple Node** 🟣  
+   - **Taint:** `color=green:NoExecute`  
+   - **Effect:** Any pod **without a matching toleration** will be **immediately evicted** from this node.  
+   - **Current Pods:** **Two purple pods** (already running).  
+
+4. **Untainted Node** ⚪  
+   - **A new node has been added to the cluster.**  
+   - **No taints applied** → Any pod **can be placed here** freely.  
+
+---
+
+## **Effect of Taints on Existing Pods**  
+
+- **Pods in the Green Node (`NoSchedule`) and Blue Node (`PreferNoSchedule`) remain unaffected.**  
+- **Pods in the Purple Node (`NoExecute`) will be evicted if they lack a matching toleration.**  
+  - If you wish to **delay eviction**, you can use the **`tolerationSeconds`** parameter.  
+
+---
+
+## **Pod Placement Behavior for New Pods**  
+
+![Alt text](/images/16a.png)
+
+Now, let's introduce **four new pods** and observe where they are scheduled **after a new untainted node is added to the cluster**.  
+
+### **1️⃣ Yellow Pod**  
+- **Toleration:** `color=yellow`  
+- **Placement Possibilities:**  
+  - **Untainted Node** (✅ **First Preference**)  
+  - **Blue Node** (🔵 **Only if the untainted node is full**)  
+
+📌 **Explanation:**  
+Since **no node has a `color=yellow` taint**, this pod is treated like a normal pod.  
+- **Untainted node** is the **first preference** because it has no restrictions.  
+- **Blue node (`PreferNoSchedule`) is the second choice**—the scheduler **will try to avoid it** unless the untainted node **does not have enough capacity**.  
+
+---
+
+### **2️⃣ Normal Pod (No Toleration)**  
+- **Toleration:** None  
+- **Placement Possibilities:**  
+  - **Untainted Node** (✅ **First Preference**)  
+  - **Blue Node** (🔵 **Only if the untainted node is full**)  
+
+📌 **Explanation:**  
+- Since this pod **has no toleration**, it **cannot be scheduled on Green or Purple nodes**.  
+- **Untainted node is the first choice** since it has **no restrictions**.  
+- **Blue node (`PreferNoSchedule`) is the backup option** if there is no space in the untainted node.  
+
+---
+
+### **3️⃣ Green Pod**  
+- **Toleration:** `color=green`  
+- **Placement Possibilities:**  
+  - **Green Node** (🟢 **First Preference**)  
+  - **Untainted Node** (⚪ **Second Preference**)  
+  - **Blue Node** (🔵 **Only if both green and untainted nodes are full**)  
+
+📌 **Explanation:**  
+- **Green node is the first preference** because it **has a matching taint (`color=green:NoSchedule`)**.  
+- **If the green node is full**, the scheduler **places pods on the untainted node**.  
+- In testing, when **one replica was created**, it was scheduled on the **green node**.  
+- When **ten replicas were created**, Kubernetes **distributed them across the green and untainted nodes** based on available **resources**.  
+- **Blue node (`PreferNoSchedule`) is only used if both green and untainted nodes are full.**  
+
+---
+
+### **4️⃣ Blue Pod**  
+- **Toleration:** `color=blue`  
+- **Placement Possibilities:**  
+  - **Untainted Node** (⚪ **First Preference**)  
+  - **Blue Node** (🔵 **Only if untainted node is full**)  
+
+📌 **Explanation:**  
+- Since **PreferNoSchedule is a soft restriction**, the scheduler **tries to avoid the blue node** if there are better options.  
+- In testing:  
+  - **One replica** → Placed in the **untainted node** (scheduler prefers it over `PreferNoSchedule`).  
+  - **Ten replicas** → Pods were **distributed equally** between the untainted and blue nodes.
+
+---
+
+## **Why Should Pods with Tolerations Prefer Tainted Nodes?**  
+
+We would want **pods with tolerations to be scheduled onto nodes with matching taints** rather than being placed on **untainted nodes**.  
+
+Imagine if:  
+- The **Green Node** is reserved for **Project A**, and  
+- The **Untainted Node** belongs to **Project B**.  
+
+Now, if a **Project A pod** is scheduled on the **Untainted Node (Project B's node)**, it **breaks the intended segregation**.  
+
+### **Real-World Use Cases for This Segregation**  
+This type of isolation can be based on:  
+- **Projects:** Different teams using dedicated nodes.  
+- **Departments:** Keeping workloads from Finance, HR, and IT separate.  
+- **Environments:** Ensuring **production** workloads do not mix with **development** ones.  
+- **Criticality:** Reserving high-performance nodes for **mission-critical applications**.  
+
+By combining **taints, tolerations, node affinity, and anti-affinity**, we can **enforce stricter placement policies** and **ensure workloads run on appropriate nodes** based on project requirements and business logic.
+We will discuss **node affinity and anti-affinity** in the next lecture.
+
 
 ---
 
@@ -271,3 +434,8 @@ tolerations:
 - **Three effects of taints:** `NoSchedule`, `PreferNoSchedule`, and `NoExecute`.  
 - **Operator `Equal` (default)** requires an exact match, while **`Exists` ignores values**.  
 - **Taints and tolerations work together** to control **pod placement and node access**.
+
+---
+
+## Reference
+[Understanding Taints and Tolerations in Kubernetes](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/)
