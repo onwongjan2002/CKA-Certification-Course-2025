@@ -13,8 +13,8 @@ spec:
         app: app1
     spec:
       nodeSelector:
-        storage: ssd
-        env: dev
+        storage: hdd
+        env: prod
       containers:
         - name: nginx
           image: nginx

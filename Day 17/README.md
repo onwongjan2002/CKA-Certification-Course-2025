@@ -67,7 +67,7 @@ To implement this, Kubernetes offers **two main approaches**:
 |------------|------------|
 | **Strict Placement** | If no node matches the label, the pod remains in the **Pending** state. |
 | **No Preferences** | It does not allow "soft" preferences—either a node matches or it does not. |
-| **No Complex Conditions** | Cannot express **AND/OR logic** (e.g., "node must have both `storage=ssd` and `env=prod`"). |
+| **No OR Condition** | You cannot specify "schedule on nodes with `storage=ssd` OR `storage=hdd`". |
 
 For more **advanced** scheduling needs, **Node Affinity** provides a more flexible alternative.
 
