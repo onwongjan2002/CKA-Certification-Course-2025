@@ -38,7 +38,7 @@ To implement this, Kubernetes offers **two main approaches**:
 
 ---
 
-## Understanding Node Selector  
+# Understanding Node Selector  
 
 `nodeSelector` is the **simplest way** to assign a pod to a node based on **labels**.  
 
@@ -201,7 +201,7 @@ After this, **any pods with `nodeSelector: { storage: ssd }` will not be schedul
 
 ---
 
-## Demo: Required Node Affinity  
+## Demo: Node Affinity  
 
 ### Step 1: Label a Node  
 
@@ -502,6 +502,32 @@ kubectl get pods -o wide
   - Taints & tolerations.  
 
 📌 Use **`requiredDuringSchedulingIgnoredDuringExecution`** for strict placement rules, and **`preferredDuringSchedulingIgnoredDuringExecution`** for weighted preferences.
+
+---
+
+ 
+
+
+
+## Node Affinity, `nodeSelector`, and Taints & Tolerations
+
+### Node Affinity (`nodeSelector`, `preferredDuringSchedulingIgnoredDuringExecution`)
+
+- `nodeSelector` is **not retroactive**—it only applies during scheduling.  
+- `preferredDuringSchedulingIgnoredDuringExecution` means that once a pod is scheduled, it **won't be re-evaluated** if the node's labels change.  
+- **Node affinity behaves the same way**—if a node’s labels change after scheduling, pods will **not be evicted or rescheduled** automatically.
+
+### Behavior of `nodeSelector`
+
+`nodeSelector` is **not retroactive**. If you modify a node's labels **after** a pod has already been scheduled, the pod **will not be evicted or rescheduled** to a different node.
+
+1. **At Scheduling Time**: The scheduler assigns the pod to a node based on the labels present at that time.  
+2. **After Scheduling**: If the node’s labels change later, the pod **remains on the same node** unless manually deleted and recreated.
+
+### Taints & Tolerations (`NoExecute` Effect)
+
+- The **`NoExecute` taint effect supports re-evaluation**—if a node’s taints change and a pod doesn’t tolerate them, it will be evicted.  
+  
 
 ---
 
