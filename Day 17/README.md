@@ -1,21 +1,38 @@
-# Day 17: Node Selector & Node Affinity/Anti-Affinity | CKA Course 2025
+# Day 17: Mastering Node Selector & Node Affinity Rules in Kubernetes | CKA Course 2025
 
 ## Video reference for Day 17 is the following:
 
-![Alt text](/images/17.png) 
+[![Watch the video](https://img.youtube.com/vi/vaW2pwSXdb4/maxresdefault.jpg)](https://www.youtube.com/watch?v=vaW2pwSXdb4&ab_channel=CloudWithVarJosh)
 
 ## Table of Contents  
+
 - [Introduction](#introduction)  
 - [Node Placement Strategies](#node-placement-strategies)  
-- [Understanding Node Selector](#understanding-node-selector)  
-  - [Limitations of Node Selector](#limitations-of-node-selector)  
-  - [Demo: Node Selector](#demo-node-selector)  
+- [Understanding Node Selector](#understanding-node-selector) 
+- [Limitations of Node Selector](#limitations-of-node-selector)  
+- [Cluster Setup for Demonstration](#cluster-setup-for-demonstration)  
+- [Demonstration: Node Selector](#demonstration-node-selector)  
+- [Key Takeaways for `nodeSelector`](#key-takeaways-for-nodeselector)  
+- [Node Affinity in Kubernetes](#node-affinity-in-kubernetes)  
+- [Types of Node Affinity](#types-of-node-affinity)  
+- [Demo: Node Affinity](#demo-node-affinity)  
+- [OR Condition (Multiple Label Matches)](#or-condition-multiple-label-matches)  
+- [AND Condition (Multiple Label Requirements)](#and-condition-multiple-label-requirements)   
+- [Node Affinity Operators](#node-affinity-operators)  
+- [Node Anti-Affinity](#node-anti-affinity)  
+- [Summary](#summary)  
+- [Understanding `preferredDuringSchedulingIgnoredDuringExecution`](#understanding-preferredduringschedulingignoredduringexecution)  
+- [Demonstration: Using Preferred Node Affinity](#demonstration-using-preferred-node-affinity)   
+- [Key Considerations](#key-considerations)  
+- [Node Affinity, `nodeSelector`, and Taints & Tolerations](#node-affinity-nodeselector-and-taints--tolerations)  
+- [References](#references)  
+
 
 ---
 
 ## Introduction  
 
-In Kubernetes, scheduling decisions determine where a pod runs within the cluster. While Kubernetes has a built-in scheduler that decides the best node for a pod, administrators often need to control **which nodes specific workloads should run on**.  
+In Kubernetes, scheduling decisions determine where a pod runs within the cluster. While Kubernetes has a built-in **scheduler** that automatically assigns pods to nodes, administrators often need to influence **scheduling decisions** to ensure specific workloads run on designated nodes.
 
 To achieve this, Kubernetes provides **label-based scheduling techniques** such as:  
 - **Node Selector** (Basic)  

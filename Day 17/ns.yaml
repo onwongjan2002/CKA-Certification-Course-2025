@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app1-deploy
+  name: ns-deploy
 spec:
   replicas: 3
   selector:
@@ -13,7 +13,7 @@ spec:
         app: app1
     spec:
       nodeSelector:
-        storage: hdd
+        storage: ssd
         env: prod
       containers:
         - name: nginx

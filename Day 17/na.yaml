@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: na-deploy
 spec:
-  replicas: 3
+  replicas: 20
   selector:
     matchLabels:
       app: app1
@@ -20,11 +20,11 @@ spec:
               - key: storage
                 operator: In
                 values:
-                - ssd
+                  - ssd
               - key: env
                 operator: In
                 values:
-                - prod
+                  - prod
       containers:
         - name: nginx
           image: nginx
