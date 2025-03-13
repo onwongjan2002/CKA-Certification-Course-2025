@@ -1,4 +1,4 @@
-# Day 18: Taints & Tolerations vs. Node Affinity | Master Pod Scheduling Control | CKA Course 2025
+# Day 18: Taints & Tolerations vs. Node Affinity | MASTER Pod Scheduling Control | CKA Course 2025
 
 ## Video reference for Day 18 is the following:
 [![Watch the video](https://img.youtube.com/vi/itEINIqjNfE/maxresdefault.jpg)](https://www.youtube.com/watch?v=itEINIqjNfE&ab_channel=CloudWithVarJosh)
@@ -88,7 +88,7 @@ affinity:
 
 ---
 
-### **Pod 3: No Tolerations, No Node Affinity**
+### **Pod3: No Tolerations, No Node Affinity**
 ✅ **Can be scheduled on Node2 (because it has no taints).**  
 ❌ **Cannot be scheduled on Node1 (because of the `NoSchedule` taint).**  
 
