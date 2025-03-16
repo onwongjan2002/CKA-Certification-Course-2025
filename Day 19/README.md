@@ -1,28 +1,37 @@
-# Day 19: MASTERING Kubernetes Requests, Limits & LimitRange | Prevent Noisy Neighbors | CKA Course 2025
+# Day 19: MASTER Kubernetes Requests, Limits & LimitRange | MUST-KNOW Concepts | CKA Course 2025
 
 ## Video reference for Day 19 is the following:
-[![Watch the video](https://img.youtube.com/vi/itEINIqjNfE/maxresdefault.jpg)](https://www.youtube.com/watch?v=itEINIqjNfE&ab_channel=CloudWithVarJosh)
+[![Watch the video](https://img.youtube.com/vi/Bu4RocrMx0g/maxresdefault.jpg)](https://www.youtube.com/watch?v=Bu4RocrMx0g&ab_channel=CloudWithVarJosh)
  
 
-## Table of Contents  
-- Introduction  
-- What are Requests and Limits?  
-- Resource Types in Kubernetes  
-- How Requests and Limits Work  
-- What Happens When a Pod Exceeds Requests?  
-- What Happens When a Pod Exceeds Limits?  
-- Demo: Memory Requests and Limits  
-- Demo: CPU Requests and Limits  
-- Default Requests and Limits (`LimitRange`)  
-- Why Use Requests and Limits?  
-- Best Practices for Managing Resources  
-- References  
+## Table of Contents
+
+- [Introduction](#introduction)
+  - [Why Do We Need Requests and Limits?](#why-do-we-need-requests-and-limits)
+- [Benefits of Using Requests and Limits](#benefits-of-using-requests-and-limits)
+- [Applying Requests and Limits to Our Example](#applying-requests-and-limits-to-our-example)
+- [What are Requests and Limits?](#what-are-requests-and-limits)
+- [Resource Types in Kubernetes](#resource-types-in-kubernetes)
+- [How Requests and Limits Work](#how-requests-and-limits-work)
+  - [How Requests Affect Scheduling](#how-requests-affect-scheduling)
+  - [How Limits Affect Running Containers](#how-limits-affect-running-containers)
+- [What Happens When a Pod Exceeds Requests?](#what-happens-when-a-pod-exceeds-requests)
+- [What Happens When a Pod Exceeds Limits?](#what-happens-when-a-pod-exceeds-limits)
+  - [CPU Limits: CPU Throttling](#cpu-limits-cpu-throttling)
+  - [Memory Limits: OOM Kills](#memory-limits-oom-kills)
+- [Monitoring Resource Utilization in Kubernetes](#monitoring-resource-utilization-in-kubernetes)
+- [How Kubernetes Collects Metrics](#how-kubernetes-collects-metrics)
+- [Why Does kubectl top nodes Fail Without the Metrics Server?](#why-does-kubectl-top-nodes-fail-without-the-metrics-server)
+- [Installing the Metrics Server](#installing-the-metrics-server)
+
 
 ---
 
 ## Introduction  
 
 ### **Why Do We Need Requests and Limits?**  
+
+![Alt text](/images/19a.png)
 
 Imagine a Kubernetes cluster with the following setup:  
 - **Node1** and **Node2**, each with **6 vCPUs and 24GB memory**.  
@@ -52,6 +61,8 @@ To prevent this, we use **Requests and Limits** to ensure that each pod gets its
 
 
 ## **Applying Requests and Limits to Our Example**  
+
+![Alt text](/images/19d.png)
 
 We define **requests and limits** as follows:  
 ```yaml
@@ -186,6 +197,8 @@ We briefly discussed the Metrics Server in **Day 7** when covering **Kubernetes 
 
 ## **How Kubernetes Collects Metrics**  
 
+![Alt text](/images/19b.png)
+
 To understand how **kubectl top nodes** retrieves resource metrics, let's break down the process:  
 
 1. **cAdvisor Collects Metrics**  
@@ -302,12 +315,12 @@ spec:
         limits:
           memory: "200Mi"
       command: ["stress"]
-      args: ["--vm", "1", "--vm-bytes", "200M", "--vm-hang", "1"]
+      args: ["--vm", "1", "--vm-bytes", "190M", "--vm-hang", "1"]
 ```
 ### **Step 2: Explanation**  
 - **requests.memory: "100Mi"** → The container is guaranteed at least **100MiB of memory**.  
 - **limits.memory: "200Mi"** → The container cannot exceed **200MiB**.  
-- **`--vm-bytes 200M`** → Tries to allocate **200MiB of memory** (within the limit).  
+- **`--vm-bytes 190M`** → Tries to allocate **190MiB of memory** (within the limit).  
 - The container **will run successfully** since it does not exceed the memory limit.  
 
 ### **Step 3: Increase Memory Usage Beyond Limit**  
@@ -319,6 +332,8 @@ args: ["--vm", "1", "--vm-bytes", "250M", "--vm-hang", "1"]
 - Run `kubectl get pods -o wide` and `kubectl top pods` to observe the OOM kill.
 
 #### **Why is the Container Killed Despite No Memory Pressure?**  
+
+![Alt text](/images/19c.png)
 
 A container **may** get terminated when it exceeds its memory limit, but **why does this happen even when the node has enough memory?**  
 
