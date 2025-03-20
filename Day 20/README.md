@@ -40,16 +40,6 @@ Scaling refers to **adjusting the resources** available to an application based 
 
 - **Elastic Scaling**: We want the ability to **scale up** when load increases and **scale down** when load decreases.
 
-There are two primary ways to scale:
-
-1. **Adding more servers/pods/instances** (Horizontal Scaling)
-2. **Increasing resources (CPU/Memory) of existing servers/pods** (Vertical Scaling)
-
-> **Scaling can be done:**
-> - **Manually** (e.g., increasing/decreasing replicas in your Deployment manually)
-> - **Automatically** (via Kubernetes objects like HPA & VPA)
-
----
 
 ## Types of Scaling
 
