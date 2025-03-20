@@ -1,11 +1,40 @@
-# Day 20 - Autoscaling in Kubernetes (HPA & VPA) | CKA Course 2025
+# Day 20: MASTER Kubernetes Autoscaling | HPA & VPA Explained with DEMO | CKA Course 2025
 
-## Video reference for Day 19 is the following:
-[![Watch the video](https://img.youtube.com/vi/Bu4RocrMx0g/maxresdefault.jpg)](https://www.youtube.com/watch?v=Bu4RocrMx0g&ab_channel=CloudWithVarJosh)
- 
-![Alt text](/images/20.png)
+## Video reference for Day 20 is the following:
+[![Watch the video](https://img.youtube.com/vi/hVLSjcJzE4U/maxresdefault.jpg)](https://www.youtube.com/watch?v=hVLSjcJzE4U&ab_channel=CloudWithVarJosh)
 
-## 📌 What is Scaling?
+
+## 📑 Table of Contents
+
+- [What is Scaling?](#what-is-scaling)
+  - [Types of Scaling](#types-of-scaling)
+    - [Horizontal Scaling (Scale Out/In)](#1-horizontal-scaling-scaling-outin)
+    - [Vertical Scaling (Scale Up/Down)](#2-vertical-scaling-scaling-updown)
+  - [Scaling Approaches](#scaling-approaches)
+  - [Pod vs Worker Node Scaling Approaches](#pod-vs-worker-node-scaling-approaches)
+- [Horizontal Pod Autoscaler (HPA)](#horizontal-pod-autoscaler-hpa)
+  - [How HPA Works](#how-hpa-works)
+  - [Supported Workloads](#supported-workloads)
+  - [Why Resource Requests Are Mandatory for HPA](#why-resource-requests-are-mandatory-for-hpa)
+  - [Metrics Used by HPA](#metrics-used-by-hpa)
+    - [Default Resource Metrics (CPU & Memory)](#1-default-resource-metrics-cpu--memory)
+    - [Custom Metrics Support](#2-custom-metrics-support)
+  - [Metrics Server Prerequisite](#metrics-server-prerequisite-for-hpa)
+  - [Demo: Horizontal Pod Autoscaler (HPA)](#demo-horizontal-pod-autoscaler-hpa)
+- [Vertical Pod Autoscaler (VPA)](#vertical-pod-autoscaler-vpa)
+  - [Why Use VPA?](#why-use-vpa)
+  - [VPA Operating Modes](#vpa-operating-modes)
+  - [Components of VPA](#components-of-vpa)
+  - [VPA as a Resource Recommendation Tool](#vpa-as-a-resource-recommendation-tool)
+  - [HPA vs VPA: Recommendations and Complementary Use](#hpa-vs-vpa-recommendations-and-complementary-use)
+  - [Important Distinction between HPA & VPA](#hpa-vs-vpa-important-distinctions)
+  - [Demo: Vertical Pod Autoscaler (VPA)](#demo-vertical-pod-autoscaler-vpa)
+- [References](#references)
+
+
+## What is Scaling?
+
+![Alt text](/images/20a.png)
 
 Scaling refers to **adjusting the resources** available to an application based on its **demand/load**. The key objective is to ensure the app has **enough resources** to handle current traffic, **without wasting resources** when demand is low.
 
@@ -22,7 +51,7 @@ There are two primary ways to scale:
 
 ---
 
-## 🌐 Types of Scaling
+## Types of Scaling
 
 ### 1. Horizontal Scaling (Scaling Out/In)
 
@@ -48,19 +77,85 @@ There are two primary ways to scale:
 
 ---
 
-## 🚀 Manual Scaling Example
+## Scaling Approaches
 
-Manually scaling Kubernetes Deployments:
+![Alt text](/images/20b.png)
+**Both Scaling Types Have Two Approaches:**
 
-```bash
-kubectl scale deployment nginx-deploy --replicas=5
-```
+### **Horizontal Scaling:**
 
-This increases replicas manually; however, it's not efficient when traffic varies unpredictably (e.g., daytime peaks, nighttime lows). That's where **autoscaling** comes into play.
+- **Manual:**  
+  Increase or decrease replicas manually by:
+  - Editing the Deployment YAML (`replicas` field)
+  - Using CLI:  
+    `kubectl scale deploy my-deploy --replicas=2`
 
----
+- **Automatic:**  
+  Use **HPA (Horizontal Pod Autoscaler)** to automatically adjust replica count based on CPU, memory, or custom metrics.
 
-Absolutely, here’s the **clean, structured theory section** for **HPA** as per your requirements—ready for you to paste directly into your `README.md` file.
+
+
+### **Scaling Worker Nodes (Horizontally):**
+
+Pods scaling is only one side; the **underlying worker nodes must also scale** to accommodate pod demands.
+
+- **Automatic Node Scaling:**  
+  Use **Cluster Autoscaler** to dynamically scale node groups (node pools) based on pending pods.
+
+- **Advanced Option (AWS-specific):**  
+  In Amazon EKS, **Karpenter** offers advanced, flexible, and faster node provisioning.
+
+- **Production Reality:**  
+  **Manual scaling of pods or worker nodes is rare in production.**  
+  Typically, clusters use multiple **Node Groups (NGs)** categorized by workload type:
+  - High-memory NG
+  - High-CPU NG
+  - GPU NG, etc.
+
+Each node group scales automatically based on workload demand.
+
+
+### **Vertical Scaling:**
+
+- **Manual:**  
+  Adjust resource **requests and limits** manually in the pod’s YAML.
+
+- **Automatic:**  
+  Use **VPA (Vertical Pod Autoscaler)** to auto-adjust CPU and memory requests based on real usage.
+
+**Important:**  
+Both approaches require **pod restarts** to apply the new resource settings.
+
+### **Worker Nodes & Vertical Scaling:**
+
+Worker nodes are **not vertically scaled**—neither manually nor automatically—in production.  
+Vertical scaling a node means resizing the VM/instance type, which:
+
+- Requires **node restart**
+- Forces **eviction of all running pods**
+
+This is **disruptive and impractical** for production environments.  
+Instead, clusters rely on **horizontal scaling of nodes** to maintain availability.
+
+
+
+## **Pod vs Worker Node Scaling Approaches**
+
+| **Scaling Type**    | **Pods (Workloads)**                                                                                             | **Worker Nodes (Infrastructure)**                                                                                           |
+|--------------------|------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
+| **Horizontal Manual**   | Increase/decrease replicas manually via YAML or `kubectl scale`                                                  | Rarely done manually in production. Possible via cloud console/CLI but not recommended.                                       |
+| **Horizontal Automatic**| **HPA (Horizontal Pod Autoscaler)** adjusts replicas based on metrics.                                          | **Cluster Autoscaler** or advanced solutions like **Karpenter (EKS)** scale node groups based on pending pod demands.         |
+| **Vertical Manual**     | Adjust resource **requests/limits** manually in YAML. Pod restart required.                                      | Not practical. Requires resizing VM instance type → **Node restart & workload eviction.**                                     |
+| **Vertical Automatic**  | **VPA (Vertical Pod Autoscaler)** automatically adjusts CPU/memory requests based on usage. Pod restart required.| **Not used.** Vertical scaling of nodes is disruptive and avoided in production environments.                                  |
+
+
+**Key Takeaway:**
+
+- **Pods:**  
+  Both horizontal (HPA) and vertical (VPA) autoscaling are feasible and common.
+  
+- **Worker Nodes:**  
+  **Only horizontal scaling** (Cluster Autoscaler/Karpenter) is used. Vertical scaling is impractical due to node disruption.
 
 ---
 
@@ -68,15 +163,12 @@ Absolutely, here’s the **clean, structured theory section** for **HPA** as per
 
 The **Horizontal Pod Autoscaler (HPA)** is a Kubernetes feature that **automatically scales the number of pods in a deployment or workload based on observed resource usage or custom metrics**.
 
----
 
 ## How HPA Works:
 
 - HPA continuously monitors the workload’s resource usage.
 - It **adjusts (scales up or scales down) the number of pod replicas** based on observed metrics.
 - It operates as a **control loop**, checking metrics at a regular interval (by default, **every 15 seconds**).
-
----
 
 ## Supported Workloads:
 
@@ -91,7 +183,19 @@ HPA supports:
 
 While HPA works with ReplicaSets and ReplicationControllers, **Deployments and StatefulSets are preferred in modern Kubernetes setups.**
 
----
+Here’s the improved, complete version incorporating your example and making the explanation even crisper:
+
+## Why Resource `Requests` Are Mandatory for HPA?
+HPA calculates utilization as a percentage of the pod’s **requested CPU or memory**. Without resource requests, HPA has no baseline to compute utilization, and scaling decisions won’t work.
+
+**Example:**  
+If you configure HPA to scale at **50% CPU utilization**, Kubernetes needs to know **50% of what?**  
+That **"what"** is the value defined in the pod’s **CPU requests**.  
+For instance, if a pod requests `200m` CPU, HPA will scale when the pod's usage crosses **100m CPU (50% of 200m)**.
+
+Simply put:  
+👉 **The metric you want to scale on must be specified in `requests` for HPA to function properly.**
+
 
 ## Metrics Used by HPA:
 
@@ -101,6 +205,29 @@ While HPA works with ReplicaSets and ReplicationControllers, **Deployments and S
 - **Memory utilization** can also be used, though it's less common because memory usage patterns are harder to predict.
 
 These metrics are provided by the **Metrics Server** (explained below).
+
+#### **Flow with Default Resource Metrics (CPU & Memory)**
+
+![Alt text](/images/20c.png)
+
+1. **Metric Collection**:
+   - The **kubelet**, present on every node in the cluster, runs **cAdvisor** internally.
+   - **cAdvisor**, integrated into the kubelet, collects container-level metrics like: **CPU usage** & **Memory usage** 
+   - These metrics are collected for all pods running on the node, including system pods.
+
+2. **API Exposure**:
+   - The **kubelet** exposes cAdvisor metrics via its API (e.g., `/metrics` endpoint).
+   - The **Metrics Server** queries this cAdvisor API to retrieve resource usage for CPU and memory.
+
+3. **API Integration**:
+   - Metrics Server aggregates data collected from all kubelets in the cluster.
+   - It provides this data in a Kubernetes-compatible format that can be queried by objects like **HPA**.
+
+4. **HPA Query and Decision**:
+   - The **HPA Controller** periodically queries the Metrics Server for **default metrics** such as CPU and memory utilization.
+   - Based on the resource requests defined in the pod spec, HPA calculates the **utilization percentage** and scales the pod replicas accordingly.
+
+
 
 
 ### 2. **Custom Metrics Support**
@@ -128,6 +255,8 @@ To utilize custom metrics:
 - The adapter exposes these metrics to the HPA via the appropriate API.
 
 #### Flow with Custom Metrics
+
+![Alt text](/images/20d.png)
 
 
 1. **Metric Collection**:
@@ -193,12 +322,11 @@ spec:
 
 **Explanation:**
 
-| Field | Description |
-|------|-------------|
-| `replicas: 1` | Starts with 1 pod |
-| `requests.cpu: "100m"` | Minimum CPU resources requested (0.1 core) |
-| `limits.cpu: "200m"` | Maximum CPU resources allowed (0.2 core) |
-| `labels: app: nginx` | Important for Service selector! |
+- **`replicas: 1`** → Starts with **1 pod**.
+- **`requests.cpu: "100m"`** → Minimum CPU resources requested (**0.1 core**).
+- **`limits.cpu: "200m"`** → Maximum CPU resources allowed (**0.2 core**).
+- **`labels: app: nginx`** → Important for **Service selector** to correctly route traffic.
+
 
 **Apply:**
 
@@ -227,12 +355,11 @@ spec:
 
 **Explanation:**
 
-| Field | Description |
-|------|-------------|
-| `selector: app: nginx` | Matches pods with label `app: nginx` |
-| `type: ClusterIP` | Exposes service **internally** inside the cluster |
-| `port: 80` | Service listens on port 80 |
-| `targetPort: 80` | Forwards to container port 80 |
+
+- **`selector: app: nginx`** → Matches pods with label **`app: nginx`**.
+- **`type: ClusterIP`** → Exposes the service **internally within the cluster**.
+- **`port: 80`** → Service listens on **port 80**.
+- **`targetPort: 80`** → Forwards traffic to the container’s **port 80**.
 
 **Apply:**
 
@@ -250,12 +377,10 @@ kubectl autoscale deployment nginx-deploy --cpu-percent=50 --min=1 --max=5
 
 **Explanation:**
 
-| Parameter | Description |
-|------|-------------|
-| `deployment nginx-deploy` | Applies to the nginx deployment |
-| `--cpu-percent=50` | Target **50% CPU utilization** |
-| `--min=1` | Minimum 1 pod |
-| `--max=5` | Maximum 5 pods |
+- **`deployment nginx-deploy`** → Applies to the **nginx deployment**.
+- **`--cpu-percent=50`** → Target **50% CPU utilization**.
+- **`--min=1`** → Minimum **1 pod**.
+- **`--max=5`** → Maximum **5 pods**.
 
 📌 **What happens:**
 
@@ -277,6 +402,11 @@ This will show:
 - Current CPU utilization.
 - Current replicas.
 - Scaling status.
+
+For more details:
+```bash
+kubectl describe hpa <hpa-name>
+```
 
 ---
 
@@ -304,12 +434,10 @@ while true; do wget -q -O- http://nginx-svc; done
 
 **Explanation:**
 
-| Part | Meaning |
-|------|-------------|
-| `while true; do ... done` | Infinite loop |
-| `wget -q` | Quiet HTTP GET request |
-| `-O-` | Output discarded |
-| `http://nginx-svc` | Sends requests to nginx pods via **Service DNS name** |
+- **`while true; do ... done`** → Creates an **infinite loop** to continuously send requests.
+- **`wget -q`** → Performs a **quiet HTTP GET request** (no verbose output).
+- **`-O-`** → Outputs the response to **standard output**, but effectively discarded.
+- **`http://nginx-svc`** → Sends requests to **nginx pods via the Service DNS name**.
 
 **Single** command to achieve the above:
 
@@ -343,18 +471,6 @@ kubectl get pods -w
 
 ---
 
-### **Key Takeaways:**
-
-- HPA automatically adjusts **replica count** based on **average CPU utilization**.
-- It requires:
-  - Metrics Server
-  - CPU resource requests/limits
-- We can simulate load using busybox + wget.
-- HPA works as a control loop, not instant — runs at **15-second intervals**.
-- Helps handle fluctuating traffic **without manual intervention**!
-
----
-
 ## Vertical Pod Autoscaler (VPA) 
 
 **Vertical Pod Autoscaler (VPA)** in Kubernetes is used to **automatically adjust the CPU and memory requests and limits of your pods based on their actual usage**.
@@ -363,8 +479,6 @@ It helps you ensure:
 
 - Pods **always have enough resources to perform efficiently**.
 - **Wasted resources are minimized**, avoiding over-provisioning.
-
----
 
 ### **Key Behavior:**
 
@@ -376,16 +490,13 @@ It helps you ensure:
    - In order to apply updated resource requests/limits, **VPA will restart pods.**
    - This is crucial because Kubernetes **cannot update CPU/Memory requests on a running pod** — the pod must be recreated.
 
----
 
 ## **Why use VPA?**
 
 - **Removes guesswork.** No need to manually tune CPU/memory requests.
 - Ideal for **stateful or single-replica apps** where HPA isn’t helpful.
 - Useful in **dynamic workloads** where resource demands frequently change.
-- Helps maintain **performance stability without wasting resources**.
 
----
 
 ## **VPA Operating Modes:**
 
@@ -395,7 +506,13 @@ It helps you ensure:
 | **Initial** | VPA sets recommended CPU/memory when pod is created. **No changes after creation.** |
 | **Auto** | VPA **actively updates pod resources and restarts pods when needed** based on usage patterns. |
 
----
+
+
+
+**🔔 Important Note:**  
+If you have only **1 replica**, **VPA will avoid restarting the pod even in `Auto` mode** to prevent application downtime.  
+To safely demonstrate VPA’s behavior and observe `Auto` mode in action, it's recommended to set the deployment to at least **2 replicas**.  
+This can be safely left at **1 replica if you’re using HPA alongside VPA**, as HPA handles scaling in that case.
 
 ## Components of VPA:
 
@@ -415,20 +532,38 @@ It helps you ensure:
    - Modifies CPU & memory requests at creation time based on the latest VPA recommendations.
    - Ensures pods **start with the right resource allocations immediately.**
 
----
 
-## **Benefits of VPA:**
-
-| Benefit | Explanation |
-|--------|------------|
-| **Cost Efficiency & Stability** | VPA prevents over-provisioning (wasting resources) and under-provisioning (performance degradation), saving cloud costs while ensuring stable app performance. |
-| **Cluster Resource Optimization** | Continuously right-sizes pods based on real usage, freeing up cluster resources for other workloads. |
-| **Elimination of Manual Benchmarking** | No need to manually analyze or guess CPU/memory needs for every application; VPA automates it based on real data. |
-
-**VPA as a Resource Recommendation Tool**
+### VPA as a Resource Recommendation Tool
 
 Even if you decide **not to use VPA in Auto mode in production**—to avoid pod restarts or potential downtime—**VPA can still be extremely valuable for recommending accurate CPU and memory requests and limits.**  
 It is particularly useful when developers are unable to provide precise resource requirements for their applications. By running VPA in **"Off" mode**, you can safely collect real-world usage data and let VPA suggest optimal resource settings without automatically applying them.
+
+### HPA vs VPA: Recommendations and Complementary Use
+
+- **Use HPA** for applications that support **horizontal scaling**, where increasing or decreasing the number of pod replicas is feasible.
+
+- **Use VPA**:
+  - To determine the optimal CPU and memory requests for a container.
+  - For applications that **cannot scale horizontally**, such as stateful or legacy workloads.
+
+#### **Complementary Use:**
+
+HPA and VPA **can be used together** in specific scenarios:
+- **HPA** adjusts the number of pod replicas based on external load or metrics.
+- **VPA** fine-tunes CPU and memory requests within each pod to ensure efficient resource usage.
+
+#### **Example Use Case:**
+
+**Batch Processing Applications**  
+VPA dynamically adjusts resource requests based on varying job sizes, while HPA scales the number of pods according to the queue length or workload backlog.
+
+### HPA vs VPA: Important Distinctions
+
+**Defining resource requests is mandatory when using HPA, as HPA relies on requests to calculate CPU or memory utilization percentages.**  
+For example, if HPA is set to scale at **50% CPU utilization**, Kubernetes calculates 50% relative to the pod’s defined CPU requests. Without requests, HPA cannot determine what 50% refers to, making scaling decisions impossible.
+
+In contrast, **VPA does not require resource requests to be specified upfront**—it observes actual usage and dynamically adjusts the requests over time.  
+However, it’s still considered **best practice to define initial requests even when using VPA**, as this allows the scheduler to correctly place the pod on a node that can accommodate its resource needs from the start.
 
 ---
 
@@ -448,12 +583,6 @@ git clone https://github.com/kubernetes/autoscaler.git
 cd autoscaler/vertical-pod-autoscaler
 ./hack/vpa-up.sh
 ```
-
-✔️ This installs:
-
-- **VPA Recommender**
-- **VPA Updater**
-- **VPA Admission Controller**
 
 ### Optional Uninstall:
 
@@ -490,7 +619,8 @@ spec:
         resources:
           requests:
             cpu: "100m"
-            memory: "100Mi"
+          limits:
+            cpu: "100m"
         ports:
         - containerPort: 80
 ---
@@ -514,11 +644,6 @@ spec:
 ```bash
 kubectl apply -f nginx-vpa.yaml
 ```
-
-**Why 2 replicas?**
-
-- **Ensures zero-downtime** when VPA restarts pods.
-- Demonstrates how VPA safely rolls out changes.
 
 ---
 
@@ -564,20 +689,20 @@ kubectl describe vpa nginx-vpa
 
 ```bash
 Recommendation:
-  Container Recommendations:
-    Container Name:  nginx
-    Lower Bound:
-      Cpu:     25m
-      Memory:  262144k
-    Target:
-      Cpu:     63m
-      Memory:  262144k
-    Uncapped Target:
-      Cpu:     63m
-      Memory:  262144k
-    Upper Bound:
-      Cpu:     1711m
-      Memory:  312499697
+    Container Recommendations:
+      Container Name:  nginx
+      Lower Bound:
+        Cpu:     25m
+        Memory:  262144k
+      Target:
+        Cpu:     25m
+        Memory:  262144k
+      Uncapped Target:
+        Cpu:     25m
+        Memory:  262144k
+      Upper Bound:
+        Cpu:     25m
+        Memory:  262144k
 ```
 
 | Field | Explanation |
@@ -589,39 +714,20 @@ Recommendation:
 
 👉 **Pod CPU/Memory will be adjusted toward the Target values.**
 
----
-
-## **Step 5️⃣ - Generate Load to Trigger VPA Adjustments**
-
-Run a **BusyBox pod** to generate continuous load:
-
-```bash
-kubectl run -it --rm load-generator --image=busybox /bin/sh
-```
-
-Inside:
-
-```bash
-while true; do wget -q -O- http://nginx-svc; done
-```
-
-### 📌 **Explanation:**
-
-| Command | Description |
-|------|-------------|
-| `kubectl run` | Launches a temporary pod |
-| `-it` | Interactive shell |
-| `--image=busybox` | Uses lightweight BusyBox image |
-| `/bin/sh` | Opens shell |
-| `--rm` | Delete pod upon exit |
+Here’s a **refined, crisp, and precise version** of your explanation, merging both paragraphs for better clarity and flow:
 
 
-**Single** command to achieve the above:
+### **Uncapped Target vs Target in VPA**
 
-`kubectl run -it --rm load-generator --image=busybox -- /bin/sh -c "while true; do wget -q -O- http://nginx-svc; done"`
+The **Uncapped Target** in VPA represents the **raw, optimal CPU and memory requests** calculated purely based on observed usage patterns—**without considering any limits, policies, or quotas** set at the cluster or namespace level.
+
+The **Target**, on the other hand, is the **final applied recommendation**, which adjusts the Uncapped Target to comply with any resource constraints like quotas, or administrative policies.
+
+**If no such constraints are in place**, the **Uncapped Target and Target will be identical**, as is the case in our setup.
+
 
 ---
-## **Step 6️⃣ - Observe VPA Actions**
+## **Step 5️⃣ - Observe VPA Actions**
 
 ### 1️⃣ **Describe VPA to Check Updates:**
 
