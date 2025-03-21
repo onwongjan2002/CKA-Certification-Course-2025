@@ -159,7 +159,7 @@ The application depends on the availability of `https://kubernetes.io`. You want
 apiVersion: v1
 kind: Pod
 metadata:
-  name: api-check-demo
+  name: init-demo
 spec:
   initContainers:
   - name: check-api
@@ -264,7 +264,7 @@ In addition to checking the external API (`https://kubernetes.io`), you want to 
 apiVersion: v1
 kind: Pod
 metadata:
-  name: api-check-demo
+  name: init-demo-2
   labels:
     app: main-app
 spec:

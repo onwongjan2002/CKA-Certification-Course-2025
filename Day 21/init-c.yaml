@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: api-check-demo
+  name: init-demo
 spec:
   initContainers:
   - name: check-api
