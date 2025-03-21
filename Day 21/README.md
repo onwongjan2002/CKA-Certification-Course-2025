@@ -265,6 +265,8 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: api-check-demo
+  labels:
+    app: main-app
 spec:
   initContainers:
   - name: check-api
@@ -297,8 +299,6 @@ spec:
   containers:
   - name: main-app
     image: nginx:latest
-  labels:
-    app: main-app
 ```
 
 ---
@@ -464,7 +464,11 @@ kubectl apply -f sidecar-logging-demo.yaml
 #### 3. Simulate Failure (Optional):
 - To simulate app unavailability:
   ```bash
-  kubectl exec -it sidecar-logging-demo -c main-app -- kill 1
+  kubectl exec -it sidecar-logging-demo -c main-app -- /bin/sh
+  ```
+- Once inside the container:
+  ```bash
+  kill 1
   ```
 - Check the sidecar container logs again:
   ```bash

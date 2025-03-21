@@ -1,0 +1,42 @@
+spec:
+  initContainers:
+  - name: init-container
+    image: busybox
+    command: ["sh", "-c", "echo 'Preparing environment'; sleep 10"]
+  containers:
+  - name: main-container
+    image: nginx
+    command: ["sh", "-c", "echo 'Main container running'"]
+
+---
+
+spec:
+  containers:
+  - name: main-container
+    image: nginx
+    command: ["sh", "-c", "echo 'Main container running'; sleep 3600"]
+  - name: sidecar-container
+    image: busybox
+    command: ["sh", "-c", "while true; do echo 'Sidecar running'; sleep 5; done"]
+
+---
+
+spec:
+  containers:
+  - name: main-container
+    image: nginx
+    command: ["sh", "-c", "echo 'Main app handling requests'; sleep 3600"]
+  - name: ambassador-container
+    image: busybox
+    command: ["sh", "-c", "while true; do echo 'Proxying requests'; sleep 5; done"]
+
+---
+
+spec:
+  containers:
+  - name: main-container
+    image: busybox
+    command: ["sh", "-c", "echo 'Generating metrics'; while true; do echo '{\"metric\":\"value\"}'; sleep 10; done"]
+  - name: adapter-container
+    image: busybox
+    command: ["sh", "-c", "while true; do echo 'Transforming metrics'; sleep 5; done"]
