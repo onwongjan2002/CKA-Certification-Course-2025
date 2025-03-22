@@ -1,11 +1,7 @@
-# Day 21: Multi-Container Pods in Kubernetes | CKA Course 2025
+# Day 21: Multi-Container Pods DEEP-DIVE | Init vs Sidecar vs Ambassador vs Adapter | CKA Course 2025
 
 ## Video reference for Day 21 is the following:
-[![Watch the video](https://img.youtube.com/vi/hVLSjcJzE4U/maxresdefault.jpg)](https://www.youtube.com/watch?v=hVLSjcJzE4U&ab_channel=CloudWithVarJosh)
-
-![Alt text](/images/21.png)
-
-### **Day 21: Multi-Container Pods**
+[![Watch the video](https://img.youtube.com/vi/VEwP_wF67Tw/maxresdefault.jpg)](https://www.youtube.com/watch?v=VEwP_wF67Tw&ab_channel=CloudWithVarJosh)
 
 ---
 
@@ -15,6 +11,7 @@ Welcome to Day 21! Today, we explore **multi-container pods**, an essential Kube
 ---
 
 ### **Why Multi-Container Pods?**
+![Alt text](/images/21c.png)
 **Why not just use separate pods?**  
 In Kubernetes, pods provide a **shared execution environment**, making them ideal for situations where containers need to work **tightly together**. For instance:
 1. Containers within a pod can **share network and storage resources**, enabling close communication.
@@ -46,6 +43,9 @@ Typically, a **multi-container pod** includes **one primary container** (the mai
 ---
 
 ### **Multi-Container Pod Patterns**
+
+![Alt text](/images/21a.png)
+![Alt text](/images/21b.png)
 Multi-container pods generally follow four key patterns:
 
 #### **1. Init Containers**
@@ -143,6 +143,7 @@ An adapter container collects JSON-based metrics from the app, converts them to 
 
 **Multi-container pods** offer flexible solutions for scenarios requiring tightly coupled container interactions. Key benefits include shared networking, storage, and coordinated operations. By adopting patterns like **Init Containers**, **Sidecars**, **Ambassadors**, and **Adapters**, Kubernetes enables optimized, scalable, and production-ready architectures.
 
+Understand that helper containers—such as Init containers, and those following the Sidecar, Ambassador, or Adapter patterns—can all **coexist** within the same pod. You can mix and match these patterns as needed. These **helper containers** handle auxiliary tasks, allowing the main application container to focus entirely on its core logic without additional overhead.
 
 ---
 
@@ -290,7 +291,7 @@ spec:
       - -c
       - |
         echo 'Checking main-app Service availability...'
-        until nslookup main-app-svc.default.svc.cluster.local > /dev/null; do
+        until nslookup main-app-svc.default.svc.cluster.local; do
           echo 'Waiting for Service DNS resolution...'
           sleep 5
         done
@@ -326,9 +327,31 @@ spec:
 1. **Init Container 1 (`check-api`)**:
    - Same as the previous demo: checks availability of `https://kubernetes.io` before proceeding.
 2. **Init Container 2 (`check-svc`)**:
-   - Uses `nslookup` to check if the internal service **main-app-svc** is resolvable.
-   - Retries every 5 seconds until the service is available in the cluster DNS.
-   - Only then allows the main container to start.
+    - **`sh -c` →**
+      - Invokes a shell (`sh`) to run the entire block of commands as a single script.
+      
+    - **`echo 'Checking main-app Service availability...'` →**
+      - Prints a message indicating the start of the Service availability check.
+
+    - **`until nslookup main-app-svc.default.svc.cluster.local > /dev/null; do` →**
+      - Uses **`nslookup`** to check if the DNS entry for the Service `main-app-svc.default.svc.cluster.local` is resolvable.
+      - **`until` loop** keeps running **until DNS resolution succeeds** (i.e., until `nslookup` returns exit code 0).
+      - **`> /dev/null`** discards any output, keeping logs clean.
+
+    - **`echo 'Waiting for Service DNS resolution...'` →**
+      - Prints a message while waiting, so you can monitor progress.
+
+    - **`sleep 5` →**
+      - Adds a 5-second delay before retrying, to avoid spamming DNS queries.
+
+    - **`done` →**
+      - Ends the loop; the script continues once DNS resolution is successful.
+
+    - **`echo 'Service is reachable, proceeding to main-app container!'` →**
+      - Once the Service is resolvable, this message is printed, and the init container completes successfully.
+    - In-Summary:
+      - This **init container** is ensuring that the Kubernetes Service **`main-app-svc`** is **DNS-resolvable and available** **before starting the main container**.
+    - It blocks the main container until that condition is met—perfect use of an init container to handle **dependency readiness**.
 3. **Main Container (`main-app`)**:
    - Starts **after both init containers** have successfully completed their checks.
 
@@ -436,11 +459,6 @@ Certainly! Here's the improved bullet-style explanation **including the `||` ope
     - Continuously monitors the main container’s health over the shared network namespace within the pod.
 
 
-
-**`&&` (AND Operator):** Executes the next command **only if the previous command succeeds (exit code 0).**
-**`||` (OR Operator):** Executes the next command **only if the previous command fails (non-zero exit code).**
-
-
 ---
 
 ### **How to Run This Demo**
@@ -482,7 +500,8 @@ kubectl apply -f sidecar-logging-demo.yaml
 
 ---
 
+### **References:**
 
-Reference:
-https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
-https://kubernetes.io/blog/2015/06/the-distributed-system-toolkit-patterns/
+- [Kubernetes Official Docs - Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/)
+- [Kubernetes Blog - The Distributed System Toolkit: Patterns](https://kubernetes.io/blog/2015/06/the-distributed-system-toolkit-patterns/)
+- [Multi-Container Pod Design Patterns (Official)](https://kubernetes.io/docs/concepts/architecture/nodes/#multi-container-pod-design-patterns)

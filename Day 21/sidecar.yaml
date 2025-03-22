@@ -3,6 +3,7 @@ kind: Pod
 metadata:
   name: sidecar-logging-demo
 spec:
+  restartPolicy: Never
   containers:
   # Main application container
   - name: main-app

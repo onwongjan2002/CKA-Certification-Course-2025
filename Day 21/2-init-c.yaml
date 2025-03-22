@@ -13,7 +13,7 @@ spec:
       - -c
       - |
         echo 'Checking external API availability...'
-        sleep 25
+        sleep 15
         until curl -s https://kubernetes.io > /dev/null; do
           echo 'Waiting for external API...'
           sleep 5
@@ -26,7 +26,7 @@ spec:
       - -c
       - |
         echo 'Checking main-app Service availability...'
-        until nslookup main-app-svc.default.svc.cluster.local > /dev/null; do
+        until nslookup main-app-svc.default.svc.cluster.local; do
           echo 'Waiting for Service DNS resolution...'
           sleep 5
         done
