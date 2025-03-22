@@ -3,6 +3,25 @@
 ## Video reference for Day 21 is the following:
 [![Watch the video](https://img.youtube.com/vi/VEwP_wF67Tw/maxresdefault.jpg)](https://www.youtube.com/watch?v=VEwP_wF67Tw&ab_channel=CloudWithVarJosh)
 
+## **Table of Contents**
+
+1. [Introduction](#introduction)
+2. [Why Multi-Container Pods?](#why-multi-container-pods)
+3. [What Are Multi-Container Pods?](#what-are-multi-container-pods)
+4. [Shared Resources in Multi-Container Pods](#shared-resources-in-multi-container-pods)
+5. [Multi-Container Pod Patterns](#multi-container-pod-patterns)
+    - [1. Init Containers](#1-init-containers)
+    - [2. Sidecar Pattern](#2-sidecar-pattern)
+    - [3. Ambassador Pattern](#3-ambassador-pattern)
+        - [Sidecar vs Ambassador Proxying](#sidecar-vs-ambassador-proxying)
+    - [4. Adapter Pattern](#4-adapter-pattern)
+6. [Differences: Init Containers vs Sidecar, Ambassador, Adapter Containers](#differences-init-containers-vs-sidecar-ambassador-adapter-containers)
+7. [Conclusion](#conclusion)
+8. [Demo: Init Container](#demo-init-container)
+9. [Extended Demo: Two Init Containers (API + Service Check)](#extended-demo-two-init-containers-api--service-check)
+10. [Demo: Sidecar Container for API Health Check and Logging](#demo-sidecar-container-for-api-health-check-and-logging)
+11. [References](#references)
+
 ---
 
 ### **Introduction**
@@ -12,6 +31,7 @@ Welcome to Day 21! Today, we explore **multi-container pods**, an essential Kube
 
 ### **Why Multi-Container Pods?**
 ![Alt text](/images/21c.png)
+
 **Why not just use separate pods?**  
 In Kubernetes, pods provide a **shared execution environment**, making them ideal for situations where containers need to work **tightly together**. For instance:
 1. Containers within a pod can **share network and storage resources**, enabling close communication.
@@ -46,6 +66,7 @@ Typically, a **multi-container pod** includes **one primary container** (the mai
 
 ![Alt text](/images/21a.png)
 ![Alt text](/images/21b.png)
+
 Multi-container pods generally follow four key patterns:
 
 #### **1. Init Containers**
@@ -143,7 +164,7 @@ An adapter container collects JSON-based metrics from the app, converts them to 
 
 **Multi-container pods** offer flexible solutions for scenarios requiring tightly coupled container interactions. Key benefits include shared networking, storage, and coordinated operations. By adopting patterns like **Init Containers**, **Sidecars**, **Ambassadors**, and **Adapters**, Kubernetes enables optimized, scalable, and production-ready architectures.
 
-Understand that helper containers—such as Init containers, and those following the Sidecar, Ambassador, or Adapter patterns—can all **coexist** within the same pod. You can mix and match these patterns as needed. These **helper containers** handle auxiliary tasks, allowing the main application container to focus entirely on its core logic without additional overhead.
+**NOTE:** Understand that helper containers—such as Init containers, and those following the Sidecar, Ambassador, or Adapter patterns—can all **coexist** within the same pod. You can mix and match these patterns as needed. These **helper containers** handle auxiliary tasks, allowing the main application container to focus entirely on its core logic without additional overhead.
 
 ---
 
@@ -504,4 +525,3 @@ kubectl apply -f sidecar-logging-demo.yaml
 
 - [Kubernetes Official Docs - Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/)
 - [Kubernetes Blog - The Distributed System Toolkit: Patterns](https://kubernetes.io/blog/2015/06/the-distributed-system-toolkit-patterns/)
-- [Multi-Container Pod Design Patterns (Official)](https://kubernetes.io/docs/concepts/architecture/nodes/#multi-container-pod-design-patterns)
