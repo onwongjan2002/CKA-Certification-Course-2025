@@ -24,11 +24,19 @@ In Kubernetes, health probes are used to check the status of applications runnin
    - **Example**:
      ```yaml
      startupProbe:
-       httpGet:
-         path: /healthz
-         port: 8080
-       failureThreshold: 30
-       periodSeconds: 10
+      httpGet:
+        path: /healthz
+        port: 8080
+      failureThreshold: 30  # Kubernetes (via Kubelet) will attempt the probe up to 30 times before failing
+      periodSeconds: 10     # Probe runs every 10 seconds
+
+      # Explanation:
+      # - This probe is responsible for determining when the application has successfully started.
+      # - It sends an HTTP GET request to /healthz on port 8080.
+      # - It will try every 10 seconds, up to 30 times (total grace period = 300 seconds).
+      # - If all 30 attempts fail, Kubernetes will mark the pod as failed and stop trying.
+      # - No restart happens because the app never started properly.
+
      ```
      This configuration ensures the app has **up to 5 minutes** (30 * 10 = 300 seconds) to initialize.
 
@@ -41,12 +49,19 @@ In Kubernetes, health probes are used to check the status of applications runnin
    - **Key Advantage**: Prevents routing traffic to containers that are temporarily unable to serve requests due to initialization delays or resource constraints.
    - **Example**:
      ```yaml
-     readinessProbe:
-       httpGet:
-         path: /readyz
-         port: 8080
-       initialDelaySeconds: 5
-       periodSeconds: 10
+      readinessProbe:
+        httpGet:
+          path: /readyz
+          port: 8080
+        initialDelaySeconds: 5  # Wait 5 seconds after container starts before probing
+        periodSeconds: 10       # Probe every 10 seconds
+
+        # Explanation:
+        # - Checks if the application is ready to serve traffic.
+        # - HTTP GET request is sent to /readyz on port 8080.
+        # - Starts after an initial delay of 5 seconds.
+        # - If probe fails, the pod is temporarily removed from Service endpoints (no restart).
+        # - Once probe passes, pod starts receiving traffic.
      ```
    - **Use Case**:
      - A database connection might temporarily fail. During this time, the readiness probe ensures that traffic is not sent to the affected pod.
@@ -60,13 +75,20 @@ In Kubernetes, health probes are used to check the status of applications runnin
    - **Key Advantage**: Helps recover from **irrecoverable failures**, such as deadlocks or unresponsive applications.
    - **Example**:
      ```yaml
-     livenessProbe:
-       exec:
-         command:
-         - cat
-         - /tmp/healthy
-       initialDelaySeconds: 3
-       periodSeconds: 5
+      livenessProbe:
+        exec:
+          command:
+          - cat
+          - /tmp/healthy
+        initialDelaySeconds: 3  # Start checking 3 seconds after the container starts
+        periodSeconds: 5        # Check every 5 seconds
+
+        # Explanation:
+        # - Verifies if the application is still alive.
+        # - Executes 'cat /tmp/healthy' inside the container.
+        # - If this command fails (e.g., file missing), the liveness probe fails.
+        # - **Kubelet will restart the container automatically** to recover from the failure.
+
      ```
    - **Use Case**:
      - Detects and restarts applications stuck in an unrecoverable state (e.g., infinite loop or deadlock).
@@ -193,17 +215,16 @@ spec:
     startupProbe:
       exec:
         command:
-        - cat
-        - /tmp/healthy
-      failureThreshold: 5 # Probe fails after 5 attempts
+        - cat             # Executes 'cat' command to check if a specific file exists
+        - /tmp/healthy    # Path to the file that indicates the app has started successfully
+      failureThreshold: 5 # Kubelet will attempt the probe 5 times before considering it failed
       periodSeconds: 10   # Probe runs every 10 seconds
-```
+    # Explanation:
+    # - This probe waits for the container to initialize by verifying the existence of /tmp/healthy.
+    # - The container sleeps for 30 seconds before creating /tmp/healthy.
+    # - If the file doesn't exist after 5 attempts, Kubelet considers the pod failed and doesn't restart it.
 
-#### Explanation:
-- **`startupProbe`**: Ensures the app has time to initialize (e.g., 30 seconds in this case).
-- **`exec`**: Runs the `cat /tmp/healthy` command to verify the app is ready.
-- **`failureThreshold`**: Allows up to 5 failures (5 * 10 seconds = 50 seconds) before restarting the pod.
-- **`periodSeconds`**: Specifies how frequently the probe runs.
+```
 
 #### Test:
 1. Apply the pod configuration:
@@ -246,17 +267,16 @@ spec:
     image: nginx
     readinessProbe:
       httpGet:
-        path: /healthz
-        port: 80
-      initialDelaySeconds: 5 # Wait 5 seconds before starting the probe
-      periodSeconds: 10      # Probe every 10 seconds
-```
+        path: /healthz       # Kubernetes sends HTTP GET requests to this endpoint
+        port: 80             # Port number where the readiness probe is executed
+      initialDelaySeconds: 5 # Waits for 5 seconds before starting the readiness probe
+      periodSeconds: 10      # Probe runs every 10 seconds
+    # Explanation:
+    # - The readiness probe ensures the pod is ready to serve traffic.
+    # - Kubelet removes the pod from service endpoints if the probe fails.
+    # - This prevents traffic from being routed to an unready pod while it is initializing or temporarily unhealthy.
 
-#### Explanation:
-- **`readinessProbe`**: Removes the pod from load balancers if the app is unready.
-- **`httpGet`**: Sends an HTTP GET request to `/healthz` on port `80` to check readiness.
-- **`initialDelaySeconds`**: Ensures the probe doesn’t start too early (e.g., before the app is initialized).
-- **`periodSeconds`**: Specifies the time interval between probe checks.
+```
 
 #### Test:
 1. Apply the pod configuration:
@@ -302,16 +322,15 @@ spec:
     command: ["sh", "-c", "touch /tmp/healthy; sleep 30; rm -rf /tmp/healthy; sleep 300"]
     livenessProbe:
       tcpSocket:
-        port: 8080
-      initialDelaySeconds: 10 # Wait 10 seconds before starting
-      periodSeconds: 15       # Check every 15 seconds
-```
+        port: 8080           # Kubernetes checks TCP connectivity on port 8080
+      initialDelaySeconds: 10 # Kubelet waits 10 seconds before starting the probe
+      periodSeconds: 15       # Probe runs every 15 seconds
+    # Explanation:
+    # - The liveness probe ensures the container is still functioning correctly.
+    # - Initially, the app creates /tmp/healthy, but it deletes it after 30 seconds (simulating failure).
+    # - If the probe fails, Kubelet restarts the container to recover from the failure.
 
-#### Explanation:
-- **`livenessProbe`**: Ensures the pod is restarted if it’s unhealthy.
-- **`tcpSocket`**: Attempts to connect to port `8080` to verify health. If the connection fails, the pod is restarted.
-- **`initialDelaySeconds`**: Waits 10 seconds to avoid premature restarts.
-- **`periodSeconds`**: Checks every 15 seconds for liveness.
+```
 
 #### Test:
 1. Apply the pod configuration:
@@ -352,31 +371,29 @@ spec:
     startupProbe:
       exec:
         command:
-        - cat
-        - /tmp/ready
-      failureThreshold: 3
-      periodSeconds: 5
+        - cat             # Executes 'cat' command to check if a specific file exists
+        - /tmp/ready      # Path to the file that indicates the app has started successfully
+      failureThreshold: 3  # Kubelet will attempt the probe 3 times before considering it failed
+      periodSeconds: 5     # Probe runs every 5 seconds
     readinessProbe:
       httpGet:
-        path: /healthz
-        port: 8080
-      initialDelaySeconds: 25
-      periodSeconds: 10
+        path: /healthz       # Kubernetes sends HTTP GET requests to this endpoint
+        port: 8080           # Port number where the readiness probe is executed
+      initialDelaySeconds: 25 # Waits for 25 seconds before starting the readiness probe
+      periodSeconds: 10       # Probe runs every 10 seconds
     livenessProbe:
       exec:
         command:
-        - cat
-        - /tmp/ready
-      initialDelaySeconds: 30
-      periodSeconds: 15
+        - cat             # Executes 'cat' command to check if a specific file exists
+        - /tmp/ready      # Path to the file indicating the app is still functioning correctly
+      initialDelaySeconds: 30 # Kubelet waits 30 seconds before starting the liveness probe
+      periodSeconds: 15       # Probe runs every 15 seconds
+    # Explanation:
+    # - This pod combines all three probes:
+    #   - Startup Probe ensures the app initializes correctly before readiness/liveness probes run.
+    #   - Readiness Probe ensures traffic is routed only to ready pods.
+    #   - Liveness Probe ensures pods that fail irrecoverably are restarted automatically.
 ```
-
-#### Explanation:
-- Combines:
-  - **Startup Probe**: Prevents premature liveness/readiness checks during initialization.
-  - **Readiness Probe**: Ensures the pod is only included in service endpoints when ready.
-  - **Liveness Probe**: Automatically restarts unresponsive pods.
-
 #### Test:
 1. Apply the combined configuration:
    ```bash
