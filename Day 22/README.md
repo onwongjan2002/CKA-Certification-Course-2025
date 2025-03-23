@@ -5,8 +5,18 @@
 
 ![Alt text](/images/22.png)
 
-### **Day 22: Health Probes in Kubernetes**
 
+## **Table of Contents**
+
+1. [Introduction](#introduction)
+2. [Types of Health Probes](#types-of-health-probes)  
+    2.1. [Startup Probes](#startup-probes)  
+    2.2. [Readiness Probes (RP)](#readiness-probes-rp)  
+    2.3. [Liveness Probes (LP)](#liveness-probes-lp)  
+3. [Why Configure Both Readiness and Liveness Probes?](#why-configure-both-readiness-and-liveness-probes)
+4. [Probe Timer Configuration Parameters](#probe-timer-configuration-parameters)
+5. [Behavior of RP, LP, and Startup Probes with Multi-Container Pods](#behavior-of-rp-lp-and-startup-probes-with-multi-container-pods)
+6. [Kubernetes Health Probes: Comprehensive Comparison](#kubernetes-health-probes-comprehensive-comparison)
 ---
 
 #### **Introduction**
@@ -124,8 +134,8 @@ While it may seem that configuring only liveness probes is enough, **best practi
 | `initialDelaySeconds` | Wait time before first probe starts after container starts     | `0` seconds       | `initialDelaySeconds: 5` → starts after 5 sec |
 | `periodSeconds`       | Time interval between probe attempts                           | `10` seconds      | `periodSeconds: 10` → probes every 10 sec   |
 | `timeoutSeconds`      | Max wait time for probe response                               | `1` second        | `timeoutSeconds: 2` → fail if no reply in 2 sec |
-| `successThreshold`    | No. of consecutive successes needed to mark successful         | `1`               | `successThreshold: 3` → pass after 3 successes |
-| `failureThreshold`    | No. of consecutive failures before marking probe as failed     | `3`               | `failureThreshold: 5` → fail after 5 failures  |
+| `successThreshold`    | No. of consecutive successes needed to mark successful         | `1` second               | `successThreshold: 3` → pass after 3 successes |
+| `failureThreshold`    | No. of consecutive failures before marking probe as failed     | `3` seconds               | `failureThreshold: 5` → fail after 5 failures  |
 
 ---
 
