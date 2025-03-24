@@ -1,18 +1,45 @@
-# Day 23: Health probes | CKA Course 2025
+# Day 22: Health probes | CKA Course 2025
 
-## Video reference for Day 23 is the following:
+## Video reference for Day 22 is the following:
 [![Watch the video](https://img.youtube.com/vi/VEwP_wF67Tw/maxresdefault.jpg)](https://www.youtube.com/watch?v=VEwP_wF67Tw&ab_channel=CloudWithVarJosh)
 
 ![Alt text](/images/22.png)
 
+---
 
-## **Introduction**
+## Table of Contents
 
-"Hello everyone, and welcome to Day 23 of our Cloud/DevOps course! Today, we’re diving deep into the life of a Pod—how it behaves under different policies, what happens when you delete it, and how to diagnose common problems. We’ll cover termination handling, restart and image pull policies, the pod lifecycle phases, and a deep dive into common pod statuses. By the end of this session, you’ll understand not just what these terms mean but also how they come into play in real-world environments."
+1. [Introduction](#introduction)
+2. [Pod Deletion and Termination Signals](#pod-deletion-and-termination-signals)
+    - [What Happens When You Run `kubectl delete pod`](#what-happens-when-you-run-kubectl-delete-pod)
+    - [Force Delete a Pod](#force-delete-a-pod)
+3. [Restart Policies](#restart-policies)
+4. [Image Pull Policies](#image-pull-policies)
+5. [Pod Lifecycle Phases](#pod-lifecycle-phases)
+    - [Pending](#1-pending)
+    - [Running](#2-running)
+    - [Succeeded](#3-succeeded)
+    - [Failed](#4-failed)
+    - [Unknown](#5-unknown)
+    - [Pod Status in Multi-Container Pods](#pod-status-in-multi-container-pods)
+    - [Differentiation Between Succeeded and Completed](#differentiation-between-succeeded-and-completed)
+    - [Summary Table](#summary-table)
+    - [Demo 1: Observing Short-Lived Pod Lifecycle](#demo-1-observing-short-lived-pod-lifecycle)
+    - [Demo 2: Observing Longer Pod Lifecycle](#demo-2-observing-longer-pod-lifecycle)
+    - [Quick Debugging Workflow](#quick-debugging-workflow)
+6. [Pod Status Deep Dive](#pod-status-deep-dive)
+7. [Debugging Common Pod Errors](#debugging-common-pod-errors)
+8. [References](#references)
 
 ---
 
-## **1. Pod Deletion and Termination Signals**
+## Introduction
+
+This document provides an in-depth understanding of Kubernetes Pod lifecycle, status transitions, termination behavior, restart and image pull policies. It also covers common pod errors like `ImagePullBackOff` and `CrashLoopBackOff` with troubleshooting tips, ensuring you can effectively debug and manage pods in any Kubernetes environment.
+
+---
+
+## Pod Deletion and Termination Signals
 
 ### **What Happens When You Run `kubectl delete pod`?**
 
@@ -44,187 +71,504 @@ spec:
   - name: nginx
     image: nginx:latest
 ```
-In this YAML, if you issue a delete command, Kubernetes gives the NGINX container 30 seconds to wrap up before force-killing it.
+---
+
+### Force Delete a Pod
+
+To force delete a pod:
+```
+kubectl delete pod mypod --force=true --grace-period=0
+```
+
+This **forces the pod to terminate immediately**, and under the hood, it behaves similarly to sending a `SIGKILL` signal to the container's process.
+
+**Explanation:**
+
+- `--force=true` bypasses the normal graceful deletion process.
+- `--grace-period=0` tells Kubernetes **not to wait** and to immediately kill the pod.
+- Kubernetes doesn't directly send UNIX signals itself but **delegates** this to the container runtime (like containerd or Docker).
+  
+When Kubernetes receives this forceful deletion request:
+1. It immediately removes the pod from the API server (even if it's still running on the node).
+2. It then asks the container runtime to kill the container **without giving the app time to shut down gracefully**, similar to a `SIGKILL`.
 
 ---
 
-## **2. Restart Policies**
+### **Important:**
+If you run:
 
-Restart policies control what Kubernetes does when a container in a pod exits. There are three types:
+```
+kubectl delete pod mypod --force=true
+```
+**without specifying `--grace-period=0`**, it still tries to respect the pod's default termination grace period (which is usually 30 seconds) unless overridden by the pod's spec.
 
-### **a. Always**  
-- **Use Case:** Commonly used in Deployments.  
-- **Behavior:** The container is restarted regardless of its exit code.
+To **force immediate termination** (equivalent to `SIGKILL`):
+```
+kubectl delete pod mypod --force=true --grace-period=0
+```
+| **Command** | **API Server (Pod object)** | **Kubelet (Container termination)** | **Grace Period Behavior** | **Explanation** |
+|------------|----------------------------|-------------------------------------|---------------------------|-----------------|
+| `kubectl delete pod mypod` | Deletes Pod gracefully | Kubelet follows normal process | Graceful shutdown | Pod object removed, Kubelet gracefully stops container (SIGTERM, waits for grace period, then SIGKILL). |
+| `kubectl delete pod mypod --force=true` | Deletes Pod immediately | Kubelet still respects terminationGracePeriodSeconds | Graceful unless explicitly overridden | **Pod object deleted immediately, but Kubelet still monitors the running container and honors the grace period.** |
+| `kubectl delete pod mypod --force=true --grace-period=0` | Deletes Pod immediately | Kubelet kills container immediately | No grace period, immediate SIGKILL | **Pod deleted from API server, Kubelet stops monitoring and forcefully kills the container instantly.** |
+
+---
+
+## Restart Policies
+Restart policies define how Kubernetes responds when containers within a pod terminate. These policies are defined at the pod level and apply to all containers within the pod. There are three types of restart policies:
+
+
+### **1. Always**
+- **Use Case:**  
+  Commonly used in Deployments, ReplicaSets, and StatefulSets, where continuous availability and scalability are key requirements.
+
+- **Behavior:**  
+  The container is always restarted regardless of its exit code (whether it succeeds with exit code `0` or fails with a non-zero exit code).
+
 - **Example:**  
-  In a typical web application where continuous availability is paramount, using `Always` ensures the pod is perpetually running.
+  In a typical web application or API server where uptime is critical, using `Always` ensures the pod remains perpetually running. Kubernetes automatically replaces failed containers to minimize downtime.
 
-### **b. OnFailure**  
-- **Use Case:** Often used in Jobs or batch processing.  
-- **Behavior:** The container is restarted only if it exits with a non-zero (failure) status.
-- **Example:**  
-  Think of a data processing job; if it fails due to an error, Kubernetes will try to restart it. However, if the job completes successfully with exit code 0, it won’t be restarted.
+- **Kubernetes Objects That Use `Always`:**  
+  - **Deployments**: Ensures pods are always running as per the desired replicas.  
+  - **ReplicaSets**: Provides fault tolerance and ensures the specified number of replicas.  
+  - **StatefulSets**: Manages stateful applications with persistence and ordered updates.  
+  - **DaemonSets**: Ensures one pod per node is always running for background tasks.
 
-### **c. Never**  
-- **Use Case:** Used when restarting is undesirable.  
-- **Behavior:** The container is not restarted even if it exits with a failure code.
-- **Example:**  
-  This policy is useful for one-off diagnostic pods where you want to see the result of a container execution without further restarts.
+**Example**
+For objects like **Deployments**, which rely on the `Always` restart policy:
 
-**Example in a Pod Spec:**
 ```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-server-deployment
 spec:
-  restartPolicy: OnFailure
-  containers:
-  - name: batch-processor
-    image: my-batch-image:latest
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web-server
+  template:
+    metadata:
+      labels:
+        app: web-server
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: nginx
+        image: nginx:latest
 ```
+
+In this example:
+- The **kind** is `Deployment`.
+- The `restartPolicy` is `Always` (the default for `Deployments`).
 
 ---
 
-## **3. Image Pull Policies**
+### **2. OnFailure**
+- **Use Case:**  
+  Often used in **Jobs** or **CronJobs**, particularly for batch tasks or one-time processes that may fail and require retries to complete successfully.
 
-Image pull policies determine whether Kubernetes should pull the container image from a registry when creating a container.
+- **Behavior:**  
+  The container is restarted **only** if it exits with a failure (non-zero exit code). If the container exits successfully (exit code `0`), no restart occurs.
 
-### **a. Always**  
-- **Behavior:** Kubernetes always pulls the latest image.
-- **Use Case:** Use this during active development when updates are frequent.
 - **Example:**  
-  ```yaml
-  imagePullPolicy: Always
-  ```
+  A data processing job that processes input files might fail if a file is missing or corrupted. With `OnFailure`, the job will be retried to handle transient errors.
 
-### **b. IfNotPresent**  
-- **Behavior:** Kubernetes pulls the image only if it is not already present on the node.
-- **Use Case:** Often used in production to reduce startup time and bandwidth usage.
-- **Example:**  
-  ```yaml
-  imagePullPolicy: IfNotPresent
-  ```
+- **Kubernetes Objects That Use `OnFailure`:**  
+  - **Jobs**: Ensures task completion by retrying failed containers.  
+  - **CronJobs**: Executes periodic tasks and retries in case of failures.  
+  - **Standalone Pods**: Sometimes used for debugging or simple one-off tasks.
 
-### **c. Never**  
-- **Behavior:** Kubernetes never pulls the image; it must already exist on the node.
-- **Use Case:** Rarely used—good for air-gapped environments or when you’re absolutely sure the image is local.
-- **Example:**  
-  ```yaml
-  imagePullPolicy: Never
-  ```
+**Example**
+For objects like **Jobs**, which commonly use the `OnFailure` restart policy:
 
-**Full Container Example:**
 ```yaml
-containers:
-- name: app
-  image: my-app:latest
-  imagePullPolicy: IfNotPresent
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: batch-job-example
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: processor
+        image: my-batch-job:latest
 ```
+
+In this example:
+- The **kind** is `Job`.
+- The `restartPolicy` is `OnFailure` (appropriate for retrying failed batch tasks).
 
 ---
 
-## **4. Pod Lifecycle Phases and Transitions**
+### **3. Never**
+- **Use Case:**  
+  Used when restarting is undesirable, such as for one-time diagnostics, debugging, or exploratory pods where the goal is to observe the pod's behavior or logs post-exit.
 
-Pods progress through several distinct phases:
+- **Behavior:**  
+  The container is **not restarted**, regardless of the exit code (whether it succeeds or fails).
 
-### **a. Pending**
-- **Description:** The pod has been accepted by the Kubernetes system, but one or more of the containers has not yet been created. This phase includes scheduling and pulling the container images.
-- **Example Scenario:**  
-  When you deploy a new pod, it might remain in Pending while Kubernetes downloads the necessary Docker image.
+- **Example:**  
+  A diagnostic pod that runs a specific command to analyze the environment (e.g., checking cluster DNS resolution) and then exits with results.
 
-### **b. Running**
-- **Description:** The pod has been bound to a node, and all containers are either running or in the process of starting.
-- **Example Scenario:**  
-  After the image is pulled and the container starts, the pod status shifts to Running.
+- **Kubernetes Objects That Use `Never`:**  
+  - **Standalone Pods**: Diagnostic or ephemeral workloads that don't require restarts.  
+  - **Jobs**: Rarely, but sometimes a one-time Job may use it for immediate analysis without retries.
 
-### **c. Succeeded**
-- **Description:** All containers in the pod have terminated normally, and they will not be restarted.
-- **Example Scenario:**  
-  Completed batch or job pods usually end up in the Succeeded state.
+**Example**
+For standalone diagnostic pods or Ephemeral Jobs where restarting is not desirable:
 
-### **d. Failed**
-- **Description:** All containers in the pod have terminated, and at least one container has terminated in failure. No further restarts will occur.
-- **Example Scenario:**  
-  A job that crashes due to an error will transition into Failed.
-
-### **e. Unknown**
-- **Description:** The state of the pod cannot be obtained, often due to a communication error with the node.
-- **Example Scenario:**  
-  If a node goes offline unexpectedly, the pod might enter an Unknown state.
-
-**ASCII Flowchart Overview:**
-
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: diagnostic-pod
+spec:
+  restartPolicy: Never
+  containers:
+  - name: debug-container
+    image: busybox
+    command: ["nslookup", "kubernetes.default.svc.cluster.local"]
 ```
-       +---------+
-       | Pending |
-       +---------+
-            |
-            v
-       +---------+      If all containers end normally
-       | Running |  ------------------------->
-       +---------+           Succeeded
-            |
-            v
-       +---------+      If any container fails and no restart.
-       |  Failed |
-       +---------+
-```
+
+In this example:
+- The **kind** remains `Pod`, as standalone pods typically use the `Never` restart policy for one-off tasks.
 
 ---
 
-## **5. Pod Status Deep Dive**
+### **Summary Table:**
+| **Restart Policy** | **Use Case**                                     | **Common Kubernetes Objects**                         |
+|--------------------|-------------------------------------------------|-----------------------------------------------------|
+| **Always**         | Continuous availability and scalability          | Deployments, ReplicaSets, StatefulSets, DaemonSets  |
+| **OnFailure**      | Batch jobs or retrying failed tasks              | Jobs, CronJobs, Standalone Pods                     |
+| **Never**          | One-off diagnostics or exploratory tasks         | Standalone Pods, Debug Pods                         |
 
-Understanding pod status is crucial for debugging:
+---
 
-### **Common Pod Statuses:**
+## Image Pull Policies
 
-#### **a. CrashLoopBackOff**
-- **What It Means:**  
-  A pod’s container is repeatedly crashing and being restarted. Kubernetes pauses between restarts using an exponential backoff strategy.
-- **Common Causes:**  
-  - Errors in the application code
-  - Misconfiguration (e.g., missing environment variables)
-  - Uncaught exceptions
-- **Diagnostic Tip:**  
-  Inspect logs using:
-  ```bash
-  kubectl logs <pod-name>
+The `imagePullPolicy` in Kubernetes specifies how the container runtime pulls container images for pods. It governs whether Kubernetes should pull the image from a container registry or use a cached version already present on the node. This setting is vital for controlling how your deployments behave in development, testing, and production environments. Kubernetes supports three types of `imagePullPolicy`:
+
+---
+
+### **1. Always**
+- **Description:**  
+  The `Always` policy instructs Kubernetes to always pull the container image from the registry, even if a matching image is already present on the node.
+
+- **Behavior:**  
+  - Kubernetes pulls the specified image every time the pod starts.
+  - This ensures that the most recent version of the image is used.
+
+- **When to Use:**  
+  - Use `Always` in **development environments** to ensure you're always working with the latest image changes.
+  - Recommended when you rely on the `latest` image tag (not ideal in production, though).
+
+- **Example:**
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: always-example
+  spec:
+    containers:
+    - name: my-app
+      image: myrepo/my-app:latest
+      imagePullPolicy: Always
   ```
-  If you suspect the container restarts are hiding the error, try:
-  ```bash
-  kubectl logs <pod-name> --previous
-  ```
+  In this example, Kubernetes will pull the `my-app:latest` image from the registry every time the pod is created or restarted, ensuring that updates to the `latest` tag are reflected.
 
-#### **b. ImagePullBackOff**
-- **What It Means:**  
-  Kubernetes is unable to pull the specified image. This status indicates that Kubernetes has attempted to download the image, encountered an error, and is now waiting before retrying.
+---
+
+### **2. IfNotPresent**
+- **Description:**  
+  The `IfNotPresent` policy directs Kubernetes to pull the container image from the registry **only if the image is not already available on the node**.
+
+- **Behavior:**  
+  - If the image is present on the node's local cache, Kubernetes uses it without pulling a new version.
+  - If the image is missing, Kubernetes fetches it from the container registry.
+
+- **When to Use:**  
+  - Use `IfNotPresent` in **production environments** to avoid unnecessary image pulls, which saves bandwidth and improves pod startup times.
+  - Appropriate for images with specific tags, such as `my-app:v1.2.3`, because tagged versions rarely change and you want predictable behavior.
+
+- **Example:**
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: ifnotpresent-example
+  spec:
+    containers:
+    - name: my-app
+      image: myrepo/my-app:v1.2.3
+      imagePullPolicy: IfNotPresent
+  ```
+  Here, Kubernetes will pull the `my-app:v1.2.3` image only if it’s not already on the node. If the image is present locally, it will use the cached version.
+
+---
+
+### **3. Never**
+- **Description:**  
+  The `Never` policy tells Kubernetes to **never pull the image** from the registry, assuming the image is already present on the node.
+
+- **Behavior:**  
+  - If the image is not present locally on the node, the pod will fail to start.
+  - Kubernetes does not attempt to contact the registry at all.
+
+- **When to Use:**  
+  - Use `Never` in **air-gapped environments** or scenarios where nodes are preloaded with container images and external image pulls are not allowed.
+  - Suitable for testing environments where you explicitly preload images manually.
+
+- **Example:**
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: never-example
+  spec:
+    containers:
+    - name: my-app
+      image: myrepo/my-app:v1.2.3
+      imagePullPolicy: Never
+  ```
+  In this case, Kubernetes will attempt to use the `my-app:v1.2.3` image from the node’s local cache. If the image is unavailable, the pod fails with an error.
+
+---
+
+### **Default Behavior**
+
+
+The default value of `imagePullPolicy` depends on how you define the image in your pod specification:
+
+1. **If the image tag is `latest`** (e.g., `myrepo/my-app:latest`) **or no tag is specified at all** (e.g., `myrepo/my-app`, which defaults to `:latest`):
+   - The default `imagePullPolicy` is **`Always`**.
+  
+2. **If the image has a specific, non-latest tag** (e.g., `myrepo/my-app:v1.2.3`):
+   - The default `imagePullPolicy` is **`IfNotPresent`**.
+
+**Best Practice:**  
+To avoid unexpected behavior (especially when tags like `latest` are reused or image changes aren't reflected), it is recommended to **explicitly set the `imagePullPolicy`** in your pod specification.
+
+---
+
+### **Which `imagePullPolicy` Should You Use?**
+| **ImagePullPolicy** | **When to Use**                                                                                                                                                         |
+|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Always**         | - Useful in **development environments** to ensure you always pull the latest image version.<br>- Recommended when using the `latest` tag or frequently updated images. |
+| **IfNotPresent**   | - Ideal for **production environments** to improve startup time and avoid unnecessary pulls.<br>- Best used with specific, immutable image tags like `v1.2.3`.           |
+| **Never**          | - Suitable for **air-gapped environments** or systems where images are **preloaded manually**.<br>- Helpful in controlled testing scenarios to avoid any registry pulls. |
+
+---
+
+### **Key Considerations**
+1. **Avoid Using `latest` Tag in Production:**  
+   Using `Always` with `latest` in production can lead to unpredictable behavior if the image changes without notice. Instead, use specific version tags (`v1.2.3`) for stability.
+
+2. **Preload Images for Faster Startup:**  
+   In air-gapped environments or production, preload images on nodes to reduce reliance on the registry. Combine `imagePullPolicy: Never` with image preloading for tight control.
+
+3. **Monitor Bandwidth Usage:**  
+   Frequent image pulls with `Always` can increase bandwidth consumption and impact cluster performance. Use `IfNotPresent` or `Never` where appropriate to optimize.
+
+---
+
+## Pod Lifecycle Phases
+
+In Kubernetes, the lifecycle of a Pod is divided into distinct **phases** that represent its current state at a given point in time. These phases help administrators understand what the Pod is doing and whether it is functioning as expected.
+Here are the phases in detail:
+
+#### **1. Pending**
+- **What it means:**  
+The Pod has been accepted by the Kubernetes system, but one or more of its containers have not yet been created or started running. This phase encompasses the initial preparation of the Pod and its containers.
+
+**This phase includes activities like:**
+- **Scheduling:** Assigning the Pod to a node based on available resources, constraints, and scheduling policies.
+- **Image Pulling:** Fetching container images from the registry if they are not already present on the node.
+- **Container Creation (Subphase `ContainerCreating`):**  
+  Once the Pod is scheduled, Kubernetes enters the `ContainerCreating` subphase where:
+  - The container runtime (e.g., Docker, containerd) sets up the container environment.
+  - Storage volumes, networking, and environment variables are initialized for the container.
+
 - **Common Causes:**  
-  - Incorrect image name or tag
-  - Authentication issues with the container registry
-- **Diagnostic Tip:**  
-  Use:
+  - Insufficient cluster resources (e.g., CPU, memory, storage).
+  - Unsatisfied scheduling constraints (like node affinity, taints, etc.).
+  - Image download delays or errors, such as `ErrImagePull` or `ImagePullBackOff`.
+
+- **Key Debugging Tips:**  
+  Use `kubectl describe pod <pod-name>` to check for errors or delays in the `Events` section, such as:
+  - "FailedScheduling" due to resource constraints.
+  - "Failed to pull image" due to incorrect image names or registry authentication issues.
+
+### **How `ContainerCreating` Fits In:**
+The `ContainerCreating` subphase of `Pending` represents the final preparatory step before containers move to the `Running` phase. During this time, Kubernetes ensures that the container environment is set up properly, including:
+- Pulling the container image (if not cached).
+- Setting up storage volumes and network configurations.
+- Initializing any environment variables or secrets.
+
+---
+
+#### **2. Running**
+- **What it means:**  
+  The Pod has been successfully scheduled to a node, and at least one container is in the `Running` state.
+  - However, the overall Pod status in `kubectl get pods` reflects the **worst container state**. For example:
+    - If one container is `Running` but another is in `ErrImagePull`, the Pod status will show `ErrImagePull`.
+  
+
+
+---
+
+#### **3. Succeeded**
+- **What it means:**  
+  The Pod has completed its lifecycle, and all containers within the Pod have terminated successfully (exit code `0`).
+  - No restarts will occur, as this state is terminal.
+- **Typical Use Case**
+  Batch jobs, short-lived Pods, cronjobs where containers run once and exit cleanly.
+
+---
+
+#### **4. Failed**
+- **What it means:**  
+  The Pod lifecycle has ended, but one or more containers have failed (exited with **non-zero** exit codes).
+  - This phase is also terminal, meaning the Pod won't restart (restartPolicy=Never) unless recreated by a controller.
+
+---
+
+#### **5. Unknown**
+- **What it means:**  
+  The Pod's state cannot be determined, often because the node hosting the Pod is unreachable or down.
+  - This phase is rare and typically indicates infrastructure issues.
+
+---
+
+### **Pod Status in Multi-Container Pods**
+When you run `kubectl get pods`, the Pod status shown represents the **worst container's state**. Kubernetes aggregates container statuses within the Pod and prioritizes showing errors over successes. 
+
+- **Example:**  
+  If a Pod has 4 containers and:
+  - 3 containers are `Running`
+  - 1 container is in `ErrImagePull`
+  - The overall Pod status will be `ErrImagePull`.
+
+This behavior ensures that issues within a Pod are highlighted immediately.
+
+---
+
+### **Differentiation Between `Succeeded` and `Completed`**
+
+- **`Succeeded`:**  
+  - This is the **official lifecycle phase** of the Pod in Kubernetes, as described internally in the Pod's status object.
+  - You’ll see `Succeeded` when running `kubectl describe pod <pod-name>`. Example output:
+    ```
+    Status: Succeeded
+    ```
+
+- **`Completed`:**  
+  - This is the **human-readable status** displayed in the `STATUS` column when you run `kubectl get pods`.
+  - Kubernetes uses "Completed" to summarize the `Succeeded` lifecycle phase for easier interpretation.
+
+**Key Difference:**  
+- `"Succeeded"` is the lifecycle phase tracked internally by Kubernetes.
+- `"Completed"` is the user-friendly representation shown in the `kubectl get pods` output.
+
+---
+
+
+### **Summary Table**
+
+| **Phase**    | **Description**                                                                                                         |
+|-------------|-------------------------------------------------------------------------------------------------------------------------|
+| **Pending**  | Pod has been accepted by the Kubernetes cluster, but containers are not yet running. Reasons include image pull delays, unscheduled pods, etc. |
+| **Running**  | Pod has been scheduled to a node, and all containers are either running or starting.                                    |
+| **Succeeded**| All containers in the Pod have terminated **successfully** (`exit code 0`), and the Pod won’t restart.                  |
+| **Failed**   | All containers have terminated, **but at least one exited with failure** (`non-zero exit code`), and is not set for automatic restart.      |
+| **Unknown**  | Kubernetes cannot determine the Pod state, often due to communication issues with the node where the Pod is running. Often because of Infrastructure failures.  |
+
+---
+
+## **Demo 1: Observing Short-Lived Pod Lifecycle**
+In this example, you'll create a Pod that performs a quick task (`ls` command) and exits. You’ll observe the lifecycle phases using real-time monitoring.
+
+### **Steps**
+1. Run the following command to create the Pod:
+   ```bash
+   kubectl run ubuntu-2 --image=ubuntu --restart=Never -- ls
+   ```
+   This will create a Pod to execute the `ls` command and terminate immediately.
+
+2. In another terminal, monitor the Pod's status transitions in real time:
+   ```bash
+   kubectl get pods -w
+   ```
+   You will observe the following lifecycle phases:
+   - **`Pending`**: The Pod is being scheduled and the container image is being pulled.
+   - **`ContainerCreating`**: Kubernetes sets up the container runtime environment.
+   - **`Completed`**: The task finishes successfully and the Pod exits.
+
+### **Key Takeaway**
+The Pod did not enter the visible `Running` phase because the task (`ls` command) completed so quickly that Kubernetes transitioned the Pod directly to `Completed`.
+
+---
+
+## **Demo 2: Observing Longer Pod Lifecycle**
+In this example, you’ll create a Pod that runs a longer task (`sleep 5`) to observe all lifecycle phases, including `Running`.
+
+### **Steps**
+1. Run the following command to create the Pod:
+   ```bash
+   kubectl run ubuntu-2 --image=ubuntu --restart=Never -- sleep 5
+   ```
+   This will create a Pod to execute the `sleep` command, pausing for 5 seconds before terminating.
+
+2. In another terminal, monitor the Pod's status transitions in real time:
+   ```bash
+   kubectl get pods -w
+   ```
+   You will observe the following lifecycle phases:
+   - **`Pending`**: The Pod is being scheduled and the container image is being pulled.
+   - **`ContainerCreating`**: Kubernetes sets up the container runtime environment.
+   - **`Running`**: The container actively executes the `sleep 5` command.
+   - **`Completed`**: The task finishes successfully and the Pod exits.
+
+### **Key Takeaway**
+Here, the container task (`sleep 5`) lasts long enough for the Pod to enter the `Running` phase before transitioning to `Completed`.
+
+---
+
+### **Quick Debugging Workflow**
+- **Check Pod Status:**
+  ```bash
+  kubectl get pods
+  ```
+  Look for statuses like `Pending`, `Running`, `Completed`, or error states like `ErrImagePull` or `CrashLoopBackOff`.
+
+- **Describe the Pod:**
   ```bash
   kubectl describe pod <pod-name>
   ```
-  This command will show events related to image pulling, such as "Failed to pull image" along with error details.
+  Inspect `Events`, `Conditions`, and individual container statuses to diagnose issues.
 
-#### **c. ErrImagePull**
-- **What It Means:**  
-  Similar to ImagePullBackOff, this status usually precedes it and shows that the image failed to pull.
-- **Diagnostic Tip:**  
-  Check:
+- **Check Container Logs:**
   ```bash
-  kubectl describe pod <pod-name>
+  kubectl logs <pod-name> -c <container-name>
   ```
-  Note the events section for clues like "ErrImagePull".
-
-#### **d. Other Causes of Crash**
-- **Common errors:**  
-  - Misconfigured command or entrypoint in the Dockerfile.
-  - Memory or CPU constraints causing the container to be OOMKilled.
-- **Diagnostic Commands:**
-  - `kubectl describe pod <pod-name>` – For events, conditions, and container statuses.
-  - `kubectl logs <pod-name>` – For application-level error logs.
 
 ---
 
-## **6. Debugging Common Pod Errors**
+## Pod Status Deep Dive
+Below is a table summarizing the common Pod statuses, their descriptions, causes, and debugging steps:
+
+| **Pod Status/Error**       | **Description**                                                                                          | **Common Causes**                                                                                                   | **How to Debug**                                                                                                                             |
+|----------------------------|----------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| **CrashLoopBackOff**        | Container repeatedly crashes and is restarted with exponential backoff.                                  | - Application errors or bugs<br>- Missing dependencies or misconfigurations<br>- Resource exhaustion (e.g., OOMKilled)<br>- Liveness probe failures | - Inspect logs: `kubectl logs <pod-name>` or `kubectl logs --previous`<br>- Check environment variables, ConfigMaps, and Secrets.<br>- Verify liveness probe setup. |
+| **ImagePullBackOff**        | Kubernetes is retrying to pull the container image, but previous attempts failed.                        | - Invalid image name or tag<br>- Authentication issues with private registries<br>- Network connectivity problems | - Describe Pod: `kubectl describe pod <pod-name>`<br>- Verify image name and tag.<br>- Test pulling the image manually (`docker pull`).       |
+| **ErrImagePull**            | Immediate failure to pull the container image.                                                          | - Invalid image or tag<br>- Registry authentication issues<br>- Registry network connectivity issues              | - Same as `ImagePullBackOff`.<br>- Check the `Events` section with `kubectl describe pod`.                                                   |
+| **OOMKilled**               | Container terminated because it exceeded its memory limit.                                              | - Application memory leaks or high memory usage<br>- Insufficient memory limits in the Pod spec                   | - Check events: `kubectl describe pod <pod-name>`<br>- Monitor memory usage with `kubectl top pod`.<br>- Adjust memory requests and limits.   |
+| **Unknown**                 | Pod state cannot be determined due to node communication failure.                                       | - Node failure or network issues                                                                                   | - Check node status: `kubectl get nodes`.<br>- Investigate node logs for issues.                                                             |
+                               
+---
+
+## Debugging Common Pod Errors
 
 ### **Step-by-Step Debugging Workflow:**
 
@@ -259,8 +603,6 @@ Understanding pod status is crucial for debugging:
 
 ---
 
-## **Conclusion**
-
-"In conclusion, today’s lesson covered the entire lifecycle of a Pod—from creation, through its various states, to deletion and graceful termination. We discussed termination signals (SIGTERM, SIGKILL) and how they influence shutdown behavior, examined restart and image pull policies to understand container recovery and deployment scenarios, and finally, took a deep dive into pod statuses like CrashLoopBackOff and ImagePullBackOff. By learning to leverage `kubectl describe` and `kubectl logs`, you now have a systematic approach to debugging and monitoring your applications in Kubernetes.
-
-Remember: understanding these internals is key not only for passing certification exams but also for managing production-grade systems."
+### References:
+- [Kubernetes Official Documentation: Pod Lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)
+- [Kubernetes Official Documentation: Container Images](https://kubernetes.io/docs/concepts/containers/images/)
