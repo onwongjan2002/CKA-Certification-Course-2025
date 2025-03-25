@@ -1,9 +1,7 @@
-# Day 22: Health probes | CKA Course 2025
+# Day 22: Kubernetes Pod Termination, Restart Policies, Image Pull Policy, Lifecycle & Common Errors | CKA 2025
 
 ## Video reference for Day 22 is the following:
-[![Watch the video](https://img.youtube.com/vi/VEwP_wF67Tw/maxresdefault.jpg)](https://www.youtube.com/watch?v=VEwP_wF67Tw&ab_channel=CloudWithVarJosh)
-
-![Alt text](/images/22.png)
+[![Watch the video](https://img.youtube.com/vi/miZl-7QI3Pw/maxresdefault.jpg)](https://www.youtube.com/watch?v=miZl-7QI3Pw&ab_channel=CloudWithVarJosh)
 
 ---
 
@@ -41,6 +39,8 @@ This document provides an in-depth understanding of Kubernetes Pod lifecycle, st
 
 ## Pod Deletion and Termination Signals
 
+![Alt text](/images/22a.png)
+
 ### **What Happens When You Run `kubectl delete pod`?**
 
 - **Command Execution:**  
@@ -54,6 +54,8 @@ This document provides an in-depth understanding of Kubernetes Pod lifecycle, st
   - **SIGTERM:** As soon as the delete command is issued, Kubernetes sends the SIGTERM signal to the main process of each container inside the pod. This signal tells the application: “It’s time to shut down gracefully. Please wrap up any ongoing tasks.”
   - **Termination Grace Period:** By default, Kubernetes waits for 30 seconds (configurable via `terminationGracePeriodSeconds` in the pod spec) for the container to exit gracefully.
   - **SIGKILL:** If the container does not exit within this grace period, Kubernetes sends a SIGKILL signal to force an immediate shutdown.
+
+Containers are typically provided with a graceful shutdown period during termination to allow the application to handle the termination signal **(e.g., SIGTERM)** appropriately. This mechanism ensures that important operations, such as closing active connections, flushing cached data, or completing ongoing tasks, are carried out before the container stops.
 
 ### **Example: Graceful Shutdown of a Web Server**
 
@@ -115,6 +117,9 @@ kubectl delete pod mypod --force=true --grace-period=0
 ---
 
 ## Restart Policies
+
+![Alt text](/images/22b.png)
+
 Restart policies define how Kubernetes responds when containers within a pod terminate. These policies are defined at the pod level and apply to all containers within the pod. There are three types of restart policies:
 
 
@@ -249,6 +254,8 @@ In this example:
 
 ## Image Pull Policies
 
+![Alt text](/images/22c.png)
+
 The `imagePullPolicy` in Kubernetes specifies how the container runtime pulls container images for pods. It governs whether Kubernetes should pull the image from a container registry or use a cached version already present on the node. This setting is vital for controlling how your deployments behave in development, testing, and production environments. Kubernetes supports three types of `imagePullPolicy`:
 
 ---
@@ -375,6 +382,8 @@ To avoid unexpected behavior (especially when tags like `latest` are reused or i
 ---
 
 ## Pod Lifecycle Phases
+
+![Alt text](/images/22d.png)
 
 In Kubernetes, the lifecycle of a Pod is divided into distinct **phases** that represent its current state at a given point in time. These phases help administrators understand what the Pod is doing and whether it is functioning as expected.
 Here are the phases in detail:
