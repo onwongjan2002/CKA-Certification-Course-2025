@@ -1,60 +1,33 @@
-# Day 23: Health probes | CKA Course 2025
+# Day 23: DEEP-DIVE into Kubernetes Health Probes | Readiness vs Liveness vs Startup | CKA Course 2025
 
 ## Video reference for Day 23 is the following:
-[![Watch the video](https://img.youtube.com/vi/VEwP_wF67Tw/maxresdefault.jpg)](https://www.youtube.com/watch?v=VEwP_wF67Tw&ab_channel=CloudWithVarJosh)
-
-![Alt text](/images/22.png)
+[![Watch the video](https://img.youtube.com/vi/ANSBnfil75Y/maxresdefault.jpg)](https://www.youtube.com/watch?v=ANSBnfil75Y&ab_channel=CloudWithVarJosh)
 
 
 ## **Table of Contents**
 
-1. [Introduction](#introduction)
+1. [Introduction](#introduction)  
 2. [Types of Health Probes](#types-of-health-probes)  
-    2.1. [Startup Probes](#startup-probes)  
-    2.2. [Readiness Probes (RP)](#readiness-probes-rp)  
-    2.3. [Liveness Probes (LP)](#liveness-probes-lp)  
-3. [Why Configure Both Readiness and Liveness Probes?](#why-configure-both-readiness-and-liveness-probes)
-4. [Probe Timer Configuration Parameters](#probe-timer-configuration-parameters)
-5. [Behavior of RP, LP, and Startup Probes with Multi-Container Pods](#behavior-of-rp-lp-and-startup-probes-with-multi-container-pods)
-6. [Kubernetes Health Probes: Comprehensive Comparison](#kubernetes-health-probes-comprehensive-comparison)
+3. [Why Configure Both Readiness and Liveness Probes?](#why-configure-both-readiness-and-liveness-probes)  
+4. [Probe Timer Configuration Parameters](#probe-timer-configuration-parameters)  
+5. [Behavior of RP, LP, and Startup Probes with Multi-Container Pods](#behavior-of-rp-lp-and-startup-probes-with-multi-container-pods)  
+6. [Kubernetes Health Probes: Comprehensive Comparison](#kubernetes-health-probes-comprehensive-comparison)  
+
 ---
 
-#### **Introduction**
+### **Introduction**
+
+![Alt text](/images/23a.png)
+
 In Kubernetes, health probes are used to check the status of applications running inside pods. These probes help Kubernetes ensure that only healthy pods are receiving traffic, and unhealthy pods are either given time to recover or restarted as necessary. The **kubelet** is responsible for performing these probes.
 
 ---
 
 ### **Types of Health Probes**
 
-1. **Startup Probes**
-Ensures that the container has enough time to initialize the application. Until this probe succeeds, **liveness and readiness probes** are not triggered.
+![Alt text](/images/23b.png)
 
-   - **Purpose**: Used for **legacy or slow-starting applications** that take variable amounts of time to initialize.
-   - **Problem Solved**: The `initialDelaySeconds` parameter cannot always capture the correct startup time for such applications. Setting it too high causes unnecessary delays, and too low leads to premature restarts.
-   - **Behavior**:
-     - When a startup probe is defined, **liveness and readiness probes do not start** until the startup probe succeeds.
-   - **Example**:
-     ```yaml
-     startupProbe:
-      httpGet:
-        path: /healthz
-        port: 8080
-      failureThreshold: 30  # Kubernetes (via Kubelet) will attempt the probe up to 30 times before failing
-      periodSeconds: 10     # Probe runs every 10 seconds
-
-      # Explanation:
-      # - This probe is responsible for determining when the application has successfully started.
-      # - It sends an HTTP GET request to /healthz on port 8080.
-      # - It will try every 10 seconds, up to 30 times (total grace period = 300 seconds).
-      # - If all 30 attempts fail, Kubernetes will mark the pod as failed and stop trying.
-      # - No restart happens because the app never started properly.
-
-     ```
-     This configuration ensures the app has **up to 5 minutes** (30 * 10 = 300 seconds) to initialize.
-
----
-
-2. **Readiness Probes (RP)**
+1. **Readiness Probes (RP)**
 Determines if the application is **ready** to handle traffic. If this probe fails, the Pod is marked as **"Not Ready"** and is removed from Service endpoints, but the container itself is not restarted.
    - **Purpose**: Checks if a container is **ready to start accepting traffic**.
    - **Behavior**:
@@ -70,18 +43,18 @@ Determines if the application is **ready** to handle traffic. If this probe fail
         periodSeconds: 10       # Probe every 10 seconds
      ```
 
-    **Explanation:**
-      - Checks if the application is ready to serve traffic.
-      - HTTP GET request is sent to /readyz on port 8080.
-      - Starts after an initial delay of 5 seconds.
-      - If probe fails, the pod is temporarily removed from Service endpoints (no restart).
-      - Once probe passes, pod starts receiving traffic.
+      - **Explanation:**
+        - Checks if the application is ready to serve traffic.
+        - HTTP GET request is sent to /readyz on port 8080.
+        - Starts after an initial delay of 5 seconds.
+        - If probe fails, the pod is temporarily removed from Service endpoints (no restart).
+        - Once probe passes, pod starts receiving traffic.
     - **Use Case**:
       - A database connection might temporarily fail. During this time, the readiness probe ensures that traffic is not sent to the affected pod.
 
 ---
 
-3. **Liveness Probes (LP)**
+2. **Liveness Probes (LP)**
 The **kubelet** uses liveness probes to know when to restart a container. For example, liveness probes could catch a deadlock, where an application is running, but unable to make progress. Restarting a container in such a state can help to make the application more available despite bugs.
 
    - **Purpose**: Checks if a container is **alive and functioning correctly**.
@@ -97,16 +70,39 @@ The **kubelet** uses liveness probes to know when to restart a container. For ex
           - /tmp/healthy
         initialDelaySeconds: 3  # Start checking 3 seconds after the container starts
         periodSeconds: 5        # Check every 5 seconds
-
-        # Explanation:
-        # - Verifies if the application is still alive.
-        # - Executes 'cat /tmp/healthy' inside the container.
-        # - If this command fails (e.g., file missing), the liveness probe fails.
-        # - **Kubelet will restart the container automatically** to recover from the failure.
-
      ```
+
+     - **Explanation:**
+        - Verifies if the application is still alive.
+        - Executes `cat /tmp/healthy` inside the container.
+        - If this command fails (e.g., file missing), the liveness probe fails.
+        - **Kubelet will restart the container automatically** to recover from the failure.
    - **Use Case**:
      - Detects and restarts applications stuck in an unrecoverable state (e.g., infinite loop or deadlock).
+---
+3. **Startup Probes**
+Ensures that the container has enough time to initialize the application. Until this probe succeeds, **liveness and readiness probes** are not triggered.
+
+   - **Purpose**: Used for **legacy or slow-starting applications** that take variable amounts of time to initialize.
+   - **Problem Solved**: The `initialDelaySeconds` parameter cannot always capture the correct startup time for such applications. Setting it too high causes unnecessary delays, and too low leads to premature restarts.
+   - **Behavior**:
+     - When a startup probe is defined, **liveness and readiness probes do not start** until the startup probe succeeds.
+   - **Example**:
+     ```yaml
+     startupProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      failureThreshold: 30  # Kubernetes (via Kubelet) will attempt the probe up to 30 times before failing
+      periodSeconds: 10     # Probe runs every 10 seconds
+     ```
+      - **Explanation:**
+        - This probe is responsible for determining when the application has successfully started.
+        - It sends an HTTP GET request to /healthz on port 8080.
+        - It will try every 10 seconds, up to 30 times (total grace period = 300 seconds).
+        - If all 30 attempts fail, Kubernetes will mark the pod as failed and stop trying.
+      - No restart happens because the app never started properly.
+     This configuration ensures the app has **up to 5 minutes** (30 * 10 = 300 seconds) to initialize.
 
 ---
 
@@ -134,8 +130,8 @@ While it may seem that configuring only liveness probes is enough, **best practi
 | `initialDelaySeconds` | Wait time before first probe starts after container starts     | `0` seconds       | `initialDelaySeconds: 5` → starts after 5 sec |
 | `periodSeconds`       | Time interval between probe attempts                           | `10` seconds      | `periodSeconds: 10` → probes every 10 sec   |
 | `timeoutSeconds`      | Max wait time for probe response                               | `1` second        | `timeoutSeconds: 2` → fail if no reply in 2 sec |
-| `successThreshold`    | No. of consecutive successes needed to mark successful         | `1` second               | `successThreshold: 3` → pass after 3 successes |
-| `failureThreshold`    | No. of consecutive failures before marking probe as failed     | `3` seconds               | `failureThreshold: 5` → fail after 5 failures  |
+| `successThreshold`    | No. of consecutive successes needed to mark successful         | `1`               | `successThreshold: 3` → pass after 3 successes |
+| `failureThreshold`    | No. of consecutive failures before marking probe as failed     | `3`               | `failureThreshold: 5` → fail after 5 failures  |
 
 ---
 
@@ -201,6 +197,8 @@ Here is the revised table with the important words and concepts **bolded** to hi
 ---
 
 ### **Probe Mechanisms**
+
+![Alt text](/images/23c.png)
 
 Kubernetes provides **three mechanisms** for performing health probes:
 
