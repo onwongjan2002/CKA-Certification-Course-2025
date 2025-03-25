@@ -238,11 +238,12 @@ In this example:
 ---
 
 ### **Summary Table:**
-| **Restart Policy** | **Use Case**                                     | **Common Kubernetes Objects**                         |
-|--------------------|-------------------------------------------------|-----------------------------------------------------|
-| **Always**         | Continuous availability and scalability          | Deployments, ReplicaSets, StatefulSets, DaemonSets  |
-| **OnFailure**      | Batch jobs or retrying failed tasks              | Jobs, CronJobs, Standalone Pods                     |
-| **Never**          | One-off diagnostics or exploratory tasks         | Standalone Pods, Debug Pods                         |
+
+| **Restart Policy** | **Use Case**                                     | **Default Kubernetes Objects**                        | **Details**                                                                                  |
+|--------------------|-------------------------------------------------|-----------------------------------------------------|----------------------------------------------------------------------------------------------|
+| **Always**         | **Continuous availability and scalability**          | **Pods, Deployments, ReplicaSets, StatefulSets, DaemonSets, Standalone Pods (Manual)** | - Ensures Pods are **restarted indefinitely**, regardless of exit codes.<br>- Suitable for **long-running workloads** such as web servers or background tasks.<br>- **Default** for objects designed to maintain **high availability and fault tolerance**.<br>- **Example**: Deployments use ReplicaSets, which always manage Pods with `restartPolicy: Always`. |
+| **OnFailure**      | **Batch jobs or retrying failed tasks**              | **Jobs, CronJobs, Standalone Pods**                     | - Restarts containers **only if they fail** (non-zero exit code).<br>- Stops if the container exits successfully.<br>- **Default** for finite workloads such as batch processing and scheduled jobs.<br>- **Example**: Jobs are designed to retry failed tasks but exit cleanly on success. |
+| **Never**          | **One-off diagnostics or exploratory tasks**         | **Not default for any object**                         | - Containers are **not restarted**, regardless of the exit code.<br>- Must be **explicitly set**.<br>- Suitable for **one-off tasks** or debugging scenarios where restarts are undesirable.<br>- **Example**: Running diagnostic commands in standalone Pods without restarts. |
 
 ---
 
