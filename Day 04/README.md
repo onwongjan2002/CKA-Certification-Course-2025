@@ -106,5 +106,3 @@ Understanding how to use custom-named Dockerfiles and the `docker build` command
 For further reading: [Docker Best Practices: Choosing Between RUN, CMD, and ENTRYPOINT](https://www.docker.com/blog/docker-best-practices-choosing-between-run-cmd-and-entrypoint/)
 
 ---
-
-Let me know if this works or if there are additional tweaks you'd like! 🚀
