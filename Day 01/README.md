@@ -4,6 +4,11 @@
 
 [![Watch the video](https://img.youtube.com/vi/r3QWVLeA5qM/maxresdefault.jpg)](https://youtu.be/r3QWVLeA5qM)
 
+---
+## ⭐ Support the Project  
+If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
 
 ## How Were Development and Deployment Done Before Docker? Why do We Need Docker? What Challenges Does it Solve?
 

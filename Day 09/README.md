@@ -5,6 +5,10 @@
 [![Watch the video](https://img.youtube.com/vi/LT3U9fkOVDQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=LT3U9fkOVDQ&ab_channel=CloudWithVarJosh)
 
 ---
+## ⭐ Support the Project  
+If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
 ## Imperative vs. Declarative
 
 ![Alt text](/images/9b.png)

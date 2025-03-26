@@ -4,6 +4,12 @@
 
 [![Watch the video](https://img.youtube.com/vi/34l1gRszQS4/maxresdefault.jpg)](https://youtu.be/34l1gRszQS4)
 
+---
+## ⭐ Support the Project  
+If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
+
 # Specifying a Custom Dockerfile Name and Understanding the Build Command in Docker
 
 When working with Docker, the default name for a Dockerfile is `Dockerfile`. However, you can use a custom name for your Dockerfile. Here’s how to specify a custom name and understand the full `docker build` command, including the build context.

@@ -4,6 +4,11 @@
 
 [![Watch the video](https://img.youtube.com/vi/MQ8fYqZwiQs/maxresdefault.jpg)](https://youtu.be/MQ8fYqZwiQs)
 
+---
+## ⭐ Support the Project  
+If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
 
 ### Important Docker Flags
 

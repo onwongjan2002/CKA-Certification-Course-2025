@@ -4,6 +4,12 @@
 
 [![Watch the video](https://img.youtube.com/vi/vaW2pwSXdb4/maxresdefault.jpg)](https://www.youtube.com/watch?v=vaW2pwSXdb4&ab_channel=CloudWithVarJosh)
 
+---
+## ⭐ Support the Project  
+If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
+
 ## Table of Contents  
 
 - [Introduction](#introduction)  

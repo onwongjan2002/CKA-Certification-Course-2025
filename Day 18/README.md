@@ -3,6 +3,11 @@
 ## Video reference for Day 18 is the following:
 [![Watch the video](https://img.youtube.com/vi/itEINIqjNfE/maxresdefault.jpg)](https://www.youtube.com/watch?v=itEINIqjNfE&ab_channel=CloudWithVarJosh)
 
+---
+## ⭐ Support the Project  
+If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
 ## **Introduction: Why Compare Taints & Tolerations with Node Affinity?**
 
 In our previous lectures, we explored **Taints & Tolerations** and **Node Affinity** separately. But the real question is:  

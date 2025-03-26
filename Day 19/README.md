@@ -2,7 +2,12 @@
 
 ## Video reference for Day 19 is the following:
 [![Watch the video](https://img.youtube.com/vi/Bu4RocrMx0g/maxresdefault.jpg)](https://www.youtube.com/watch?v=Bu4RocrMx0g&ab_channel=CloudWithVarJosh)
- 
+
+---
+## ⭐ Support the Project  
+If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
 
 ## Table of Contents
 

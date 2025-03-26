@@ -4,7 +4,11 @@
 
 [![Watch the video](https://img.youtube.com/vi/wBF3YCMgZ7U/maxresdefault.jpg)](https://youtu.be/wBF3YCMgZ7U)
 
+---
+## ⭐ Support the Project  
+If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
 
+---
 
 # Important Installation links:
 

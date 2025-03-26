@@ -4,6 +4,11 @@
 
 [![Watch the video](https://img.youtube.com/vi/waJ8brXMtYg/maxresdefault.jpg)](https://www.youtube.com/watch?v=waJ8brXMtYg&ab_channel=CloudWithVarJosh)
 
+---
+## ⭐ Support the Project  
+If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
 
 # **Understanding Frontend, Backend, Middleware, and the Three-Tier Architecture**  
 

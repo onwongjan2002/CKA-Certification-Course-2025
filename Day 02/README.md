@@ -4,6 +4,12 @@
 
 [![Watch the video](https://img.youtube.com/vi/YVq-3UWt63U/maxresdefault.jpg)](https://youtu.be/YVq-3UWt63U)
 
+---
+## ⭐ Support the Project  
+If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
+
 ## Understanding "docker pull ubuntu"
 
 This command fetches the ubuntu image. Since we didn’t specify a tag, Docker assumes the :latest tag, meaning the most recent version of the image.

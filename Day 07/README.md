@@ -4,6 +4,12 @@
 
 [![Watch the video](https://img.youtube.com/vi/-9Cslu8PTjU/maxresdefault.jpg)](https://www.youtube.com/watch?v=-9Cslu8PTjU&ab_channel=CloudWithVarJosh)
 
+---
+## ⭐ Support the Project  
+If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
+
 ## What is Pod?
 ![Alt text](/images/7a.png)
 

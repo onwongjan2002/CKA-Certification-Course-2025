@@ -4,6 +4,12 @@
 
 [![Watch the video](https://img.youtube.com/vi/G_Ro0urceF0/maxresdefault.jpg)](https://www.youtube.com/watch?v=G_Ro0urceF0&ab_channel=CloudWithVarJosh)  
 
+---
+## ⭐ Support the Project  
+If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
+
 ## Table of Contents
 
 - [Introduction: Why Taints and Tolerations?](#introduction-why-taints-and-tolerations)

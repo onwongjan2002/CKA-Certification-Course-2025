@@ -3,6 +3,12 @@
 ## Video reference for Day 21 is the following:
 [![Watch the video](https://img.youtube.com/vi/VEwP_wF67Tw/maxresdefault.jpg)](https://www.youtube.com/watch?v=VEwP_wF67Tw&ab_channel=CloudWithVarJosh)
 
+---
+## ⭐ Support the Project  
+If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
+
 ## **Table of Contents**
 
 1. [Introduction](#introduction)

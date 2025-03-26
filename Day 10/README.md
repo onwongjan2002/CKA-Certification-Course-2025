@@ -4,6 +4,11 @@
 
 [![Watch the video](https://img.youtube.com/vi/_YNBhQGMut4/maxresdefault.jpg)](https://www.youtube.com/watch?v=_YNBhQGMut4&ab_channel=CloudWithVarJosh)
 
+---
+## ⭐ Support the Project  
+If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
 # **Table of Contents**
 
 1. [Checking Kubernetes Object Details](#1-checking-kubernetes-object-details)  
