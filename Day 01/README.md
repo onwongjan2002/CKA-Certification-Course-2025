@@ -31,8 +31,25 @@ Before Docker, the software lifecycle involved several manual and error-prone pr
 
 ---
 
-#### **Real-World Example of the Problem**
-Imagine **Developer A** writes code using Python 3.8, but the production server has Python 3.9. This slight difference can cause compatibility issues, breaking the application in production. Fixing these problems required manual intervention, wasting valuable time and slowing down the software lifecycle.
+### **Challenges with Traditional Deployment Approaches:**  
+
+1. **Dependency Management:**  
+   - Different operating systems, libraries, and configurations across environments lead to inconsistencies.  
+   - Example: Development uses **Python 3.4**, but production runs **Python 3.1**, causing compatibility issues.  
+
+2. **Inefficient Resource Usage:**  
+   - Running multiple Virtual Machines (VMs) for different applications increases overhead.  
+   - Hosting multiple applications on a single VM leads to resource contention.  
+
+3. **Complex & Error-Prone Deployment:**  
+   - Manual configurations across development, testing, and production environments introduce human errors.  
+   - Each environment may require different settings, leading to deployment failures.  
+
+4. **Lack of Isolation:**  
+   - Applications running on the same VM can **conflict** due to shared dependencies, ports, or configurations.  
+   - Example: Two applications requiring **different versions of the same library** can lead to unexpected failures.  
+
+**Solution?** → **Docker Containers** 
 
 ---
 
