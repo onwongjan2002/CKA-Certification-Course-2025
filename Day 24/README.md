@@ -312,6 +312,11 @@ Docker does **not** run natively on macOS or Windows. Instead, **Docker Desktop*
 | macOS     | Docker Desktop uses a Linux VM via the **Apple Virtualization Framework** (previously **HyperKit**) |
 | Windows   | Docker Desktop uses **WSL 2 (Windows Subsystem for Linux)** to run the Linux kernel |
 
+**Can You Install Docker Engine Directly on macOS or Windows?**
+
+❌ **No, not directly like on Linux.**
+- Both **macOS** and **Windows** do **not have a native Linux kernel**, which Docker Engine **requires** to run containers.
+- Docker Engine relies heavily on Linux features like **cgroups**, **namespaces**, and **UnionFS (e.g., overlay2)** — which are unavailable on macOS and Windows.
 --- 
 
 ### **Understanding Docker Volumes**
@@ -352,13 +357,13 @@ Now let’s do the same thing, but with a **named volume** mounted to `/app`.
 
 ```bash
 docker volume create my-vol
-docker run -d --name my-cont-2 -v my-vol:/app my-image
+docker run -d --name my-cont-1 -v my-vol:/app my-image
 ```
 
 Then, exec into the container and create the file again:
 
 ```bash
-docker exec -it my-cont-2 bash
+docker exec -it my-cont-1 bash
 cd /app
 echo "This is my delta data" > file.txt
 cat file.txt   # ✅ File exists
@@ -367,7 +372,7 @@ cat file.txt   # ✅ File exists
 Now, delete the container:
 
 ```bash
-docker rm -f my-cont-2
+docker rm -f my-cont-1
 ```
 
 Even though the container is gone, the data still exists. You can verify this by checking the volume’s data directly:
