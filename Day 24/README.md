@@ -371,7 +371,7 @@ sudo cat /var/lib/docker/volumes/my-vol/_data/file.txt
 
 ---
 
-### ⚠️ **Note for macOS and Windows Users**
+### **Note for macOS and Windows Users**
 
 On **Linux**, Docker runs natively and stores volumes under:
 
@@ -383,7 +383,7 @@ However, on **macOS** (and Windows), Docker runs inside a lightweight **virtual 
 
 As a result, you **won’t find** the `/var/lib/docker/volumes` directory on your local Mac filesystem — it exists **inside the Docker VM**.
 
-#### 🔍 How to Access Volume Data on macOS:
+#### How to Access Volume Data on macOS:
 
 If you're on macOS/Windows and want to inspect volume data:
 
@@ -413,10 +413,6 @@ Docker supports different volume types, and each has its own use case:
 
 In most production use-cases, **named volumes** are preferred because they are **managed, portable, and persistent**.  
 For development and local testing, **bind mounts** are useful when you want to sync code from your local machine into the container.
-
----
-
-Here's a refined **Conclusion**, **References**, and **Table of Contents** section for your `README.md` based on the content structure and tone of the document:
 
 ---
 
