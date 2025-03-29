@@ -1,4 +1,4 @@
-# Day 25: Kubernetes Volumes | CKA 2025 Course
+# Day 25: Kubernetes Core & Extensions Explained | CNI, CSI, CRI & Add-Ons | CKA Course 2025
 
 ## Video reference for Day 25 is the following:
 
