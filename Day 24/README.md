@@ -1,7 +1,8 @@
 # Day 24: Docker Volumes Explained | Foundation for Kubernetes Persistent Storage | CKA 2025 Course
 
 ## Video reference for Day 24 is the following:
-TBU
+
+[![Watch the video](https://img.youtube.com/vi/5t3yHFoqK6g/maxresdefault.jpg)](https://www.youtube.com/watch?v=5t3yHFoqK6g&t=12s&ab_channel=CloudWithVarJosh)
 
 ---
 ## ⭐ Support the Project  
@@ -36,6 +37,8 @@ Welcome to Day 24, where we dive deep into **Docker volumes**! To set the stage,
 ---
 
 ### **Understanding Storage in Docker**
+
+![Alt text](/images/24a.png)
 
 Imagine we have a host system—this could be a VM or your laptop—that has the **Docker Engine** installed. We’re hosting three containers on this host: **Container 1**, **Container 2**, and **Container 3**. All these containers are based on an image created using the following `Dockerfile`:
 
@@ -119,6 +122,8 @@ When you create a container from an image:
 
 ### **Storage Calculation Example**
 
+![Alt text](/images/24b.png)
+
 Let’s assume:
 - The base image size is **50MB**.
 - Three containers are running from the same image:  
@@ -135,6 +140,8 @@ Let’s assume:
 
 ### **Handling Data Loss in Writable Layers**
 
+![Alt text](/images/24c.png)
+
 Since the image layers are **read-only**, any changes made to the container are stored in the **writable layer**. If a container is stopped or fails:
 - For instance, if **Container 2** stops, the **10MB of delta data in its writable layer will be lost**.  
 - This highlights the need for a mechanism to **persist container data**, ensuring important data survives beyond the container's lifecycle.
@@ -147,6 +154,8 @@ To avoid such data loss, Docker provides **volumes**—a powerful mechanism for 
 ---
 
 ## **Storage in Docker: How Does It Work?**
+
+![Alt text](/images/24d.png)
 
 When you create a **Docker container**, it needs a way to store data. Docker achieves this with two key components:
 - **Storage Drivers** 
@@ -265,30 +274,7 @@ We’ll break all this down more clearly in the **next lecture**, where we’ll 
 
 ## **How Docker Storage Works on macOS, Windows, and Linux**
 
-Docker behaves differently depending on the operating system because containers require a Linux kernel. Here's how storage is handled across platforms:
-
-### **Linux**
-
-- On **Linux**, Docker runs **natively** without any virtualization layer.
-- Storage and volumes are created directly on the host filesystem.
-- You can access Docker volumes at:  
-  ```
-  /var/lib/docker/volumes
-  ```
----
-
-### **macOS and Windows**
-
-Docker does **not** run natively on macOS or Windows. Instead, **Docker Desktop** provides a Linux environment using a lightweight virtual machine.
-
-| OS        | Virtualization Backend                         |
-|-----------|------------------------------------------------|
-| macOS     | Docker Desktop uses a Linux VM via the **Apple Virtualization Framework** (previously **HyperKit**) |
-| Windows   | Docker Desktop uses **WSL 2 (Windows Subsystem for Linux)** to run the Linux kernel |
-
----
-
-## **How Docker Storage Works on macOS, Windows, and Linux**
+![Alt text](/images/24e.png)
 
 Docker behaves differently depending on the operating system because containers require a Linux kernel. Here's how storage is handled across platforms:
 
@@ -317,6 +303,9 @@ Docker does **not** run natively on macOS or Windows. Instead, **Docker Desktop*
 ❌ **No, not directly like on Linux.**
 - Both **macOS** and **Windows** do **not have a native Linux kernel**, which Docker Engine **requires** to run containers.
 - Docker Engine relies heavily on Linux features like **cgroups**, **namespaces**, and **UnionFS (e.g., overlay2)** — which are unavailable on macOS and Windows.
+
+**NOTE**: While you can install **Docker Desktop** on a **Linux system**, it’s generally not recommended because Linux natively supports Docker Engine, which is more lightweight and efficient. When you run Docker Desktop on Linux, it still creates a lightweight virtual machine using the system's virtualization technology, adding an unnecessary layer of overhead compared to using Docker Engine directly on the host.
+
 --- 
 
 ### **Understanding Docker Volumes**
