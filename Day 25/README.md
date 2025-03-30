@@ -1,6 +1,7 @@
-# Day 25: Kubernetes Core & Extensions Explained | CNI, CSI, CRI & Add-Ons | CKA Course 2025
+# Day 25: Kubernetes Core & Extensions | CNI, CSI, CRI, Add-Ons & Plugins Explained | CKA Course 2025
 
 ## Video reference for Day 25 is the following:
+[![Watch the video](https://img.youtube.com/vi/AVovCH0dvyM/maxresdefault.jpg)](https://www.youtube.com/watch?v=AVovCH0dvyM&ab_channel=CloudWithVarJosh)
 
 ---
 ## ⭐ Support the Project  
@@ -68,11 +69,76 @@ Nodes are the worker machines that run containerized workloads.
 While the **Kubernetes Core** provides essential orchestration functionalities, additional features like networking, storage, monitoring, and security are implemented via **external components**.  
 
 ### **1️⃣ Plugins**  
-Plugins extend Kubernetes by enabling external integration while adhering to standardized APIs.  
+Plugins extend Kubernetes by enabling external integration while adhering to standardized APIs. 
+
+
+CNI (Container Network Interface), CRI (Container Runtime Interface), and CSI (Container Storage Interface) are standardized interfaces that define how networking, runtime, and storage components interoperate with Kubernetes. These interfaces adhere to specifications that are developed and maintained by the Kubernetes community under the governance of the CNCF. Although the CNCF endorses these standards, it is the community that actively defines and updates the specifications.
+
+Anyone can develop their own plugins for CNI, CRI, and CSI as long as they conform to these specifications, ensuring compatibility and interoperability within Kubernetes environments.
+
 
 - **Container Network Interface (CNI):** Configures Pod networking and IP allocation.  
 - **Container Storage Interface (CSI):** Manages external storage solutions.  
 - **Container Runtime Interface (CRI):** Allows Kubernetes to interact with various container runtimes (e.g., containerd, CRI-O).  
+ 
+
+#### **CRI Plugins (Container Runtimes)**
+*(The following list is indicative, not exhaustive.)*
+| Plugin        | Description |
+|--------------|------------|
+| **containerd** | Default for most Kubernetes setups; lightweight, optimized, and follows OCI standards. |
+| **CRI-O** | Minimal runtime designed for Kubernetes; integrates tightly with OpenShift. |
+| **Kata Containers** | Uses lightweight VMs for security; ideal for isolating untrusted workloads. |
+| **gVisor (by Google)** | User-space sandboxing for enhanced security; limits direct host access. |
+
+#### **CNI Plugins (Networking)**
+*(The following list is indicative, not exhaustive.)*
+| Plugin        | Description |
+|--------------|------------|
+| **Calico** | Supports network policies and BGP routing; ideal for security-focused environments. |
+| **Cilium** | High-performance with eBPF-based networking; excels in observability and security. |
+| **Flannel** | Lightweight and simple; lacks network policy support. |
+| **Weave Net** | Provides encrypted pod-to-pod communication; supports multi-cluster setups. | 
+
+#### **CSI Plugins (Storage)**
+*(The following list is indicative, not exhaustive.)*
+| Plugin        | Description |
+|--------------|------------|
+| **Amazon EBS CSI** | Provides block storage for Kubernetes workloads on AWS; supports dynamic provisioning. |
+| **Azure Disk CSI** | Offers high-performance, persistent storage for Kubernetes on Azure. |
+| **Google PD CSI** | Integrates with Google Cloud Persistent Disks; supports snapshots and resizing. |
+| **Ceph RBD CSI** | Ideal for scalable, distributed storage; supports snapshots and cloning. |
+| **Portworx CSI** | Enterprise-grade storage with high availability, backups, and replication. |
+| **OpenEBS CSI** | Lightweight and cloud-native storage for Kubernetes; optimized for local PVs. |
+| **Longhorn CSI** | Rancher’s distributed block storage for Kubernetes; supports snapshots and disaster recovery. |
+
+#### **Responsibilities of CRI, CNI, and CSI in Kubernetes**  
+*(The responsibilities listed below are indicative, not exhaustive.)*  
+
+**CRI (Container Runtime Interface) - Manages Container Lifecycle**  
+- Pulls container images from registries.  
+- Starts, stops, and deletes containers.  
+- Manages container networking via CNI integration.  
+- Handles logging and monitoring of containers.  
+- Allocates resources like CPU and memory to containers.  
+- Ensures compatibility with Kubernetes via standardized gRPC APIs.  
+
+**CNI (Container Network Interface) - Manages Pod Networking**  
+- Assigns IP addresses to pods.  
+- Enables communication between pods across nodes.  
+- Manages network policies for security and isolation.  
+- Supports service discovery and DNS resolution.  
+- Integrates with cloud and on-prem networking solutions.  
+- Provides network metrics and observability features.  
+
+**CSI (Container Storage Interface) - Manages Storage for Pods**  
+- Dynamically provisions persistent storage for workloads.  
+- Supports mounting and unmounting of storage volumes.  
+- Handles volume resizing, snapshots, and backups.  
+- Ensures data persistence across pod restarts.  
+- Integrates with various cloud and on-prem storage providers.  
+- Manages access controls and multi-node storage sharing.  
+
 
 ### **2️⃣ Add-Ons**  
 Add-ons enhance Kubernetes with additional functionalities:  
