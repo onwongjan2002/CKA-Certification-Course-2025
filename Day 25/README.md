@@ -9,7 +9,6 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 
 ---
 
-![Alt text](/images/25.png)
 ## Table of Contents  
 
 1. [Introduction](#introduction)  
@@ -37,6 +36,9 @@ Kubernetes is built on a **modular and extensible architecture**, where the **co
 ---
 
 # **Kubernetes Core and Extended Architecture**  
+
+![Alt text](/images/25a.png)
+
 Kubernetes is a powerful container orchestration platform built on a **modular design**. This modularity enables **flexibility, scalability, and extensibility**. The **core components** handle essential orchestration tasks, while **plugins, add-ons, and third-party extensions** extend functionality without bloating the core system.  
 
 This section clarifies the distinction between **Kubernetes Core** and **External Extensions**, explaining how various components interact within the overall architecture.  
@@ -69,6 +71,9 @@ Nodes are the worker machines that run containerized workloads.
 While the **Kubernetes Core** provides essential orchestration functionalities, additional features like networking, storage, monitoring, and security are implemented via **external components**.  
 
 ### **1️⃣ Plugins**  
+
+![Alt text](/images/25b.png)
+
 Plugins extend Kubernetes by enabling external integration while adhering to standardized APIs. 
 
 
