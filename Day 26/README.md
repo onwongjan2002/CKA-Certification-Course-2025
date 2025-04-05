@@ -86,7 +86,6 @@ Ephemeral storage refers to storage that is temporary, meaning that any data wri
   ```
   *Here, `/data` is an emptyDir volume that will be removed along with the Pod.*
 
-  Here's an improved and clearly formatted version of your verification steps:
 
 ---
 
@@ -304,7 +303,7 @@ This further confirms that the Downward API volume successfully mounted the meta
 
 ---
 
-#### **ConfigMaps & Secrets (To Be Discussed Later)**
+#### **ConfigMaps & Secrets (To Be Discussed in Next Lecture)**
 
 - **Overview:**  
   ConfigMaps and Secrets are Kubernetes objects designed to inject configuration data and sensitive information into Pods. While they exist independently of Pods, when mounted as volumes, the data is temporary and only available for the Pod’s lifetime.
