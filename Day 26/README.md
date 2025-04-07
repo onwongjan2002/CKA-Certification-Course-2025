@@ -199,6 +199,11 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: downwardapi-volume
+  labels:
+    app: good_app
+    owner: hr
+  annotations:
+    version: "good_version"
 spec:
   containers:
   - name: metadata-container
