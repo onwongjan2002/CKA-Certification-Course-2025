@@ -345,7 +345,17 @@ Learn more: [Kubernetes Documentation on hostPath](https://kubernetes.io/docs/co
 ---
 
 #### **Demo: hostPath:**  
-  ```yaml
+Here’s a technically polished and enhanced version of your `hostPath` demo section, written in a clean and professional tone:
+
+---
+
+### Demo: hostPath
+
+In this demonstration, we showcase how to use the `hostPath` volume type in Kubernetes to mount a file from the host node into a container.
+
+We begin by creating the following Pod:
+
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -355,28 +365,83 @@ spec:
   - name: busybox-container
     image: busybox
     command: ["sh", "-c", "cat /data && sleep 3600"]
-    # The container will read and print the content of the /data file and then sleep for 1 hour.
+    # The container reads and prints the content of /data, then sleeps for 1 hour.
     volumeMounts:
     - mountPath: /data
       name: host-volume
-      # Mounts the volume named 'host-volume' to the /data path inside the container.
-      # This allows the container to access the file from the host system.
+      # Mounts the 'host-volume' to the /data path inside the container.
+      # This gives the container access to the file on the host.
   volumes:
   - name: host-volume
     hostPath:
       path: /tmp/hostfile
-      # Specifies the exact file path on the host node that will be mounted.
-      # If the file does not exist, it will be created automatically due to 'FileOrCreate' type.
       type: FileOrCreate
-      # 'FileOrCreate' ensures that if /tmp/hostfile does not already exist on the node,
-      # it will be created as an empty file before mounting into the container.
+      # If /tmp/hostfile doesn't exist on the host, it is created as an empty file before being mounted.
+```
 
-  ```
-  *With this configuration, the file `/tmp/hostfile` on the host is accessible inside the container at `/data`.*
+> With this configuration, the file `/tmp/hostfile` on the host becomes accessible inside the container at `/data`.
 
-  [hostPath volume types](https://kubernetes.io/docs/concepts/storage/volumes/#hostpath-volume-types)
+Now, let’s populate the file with content using the command below:
+
+```bash
+kubectl exec -it hostpath-example -- sh -c 'echo "Hey you!!" > /data'
+```
+
+**Understanding `hostPath` Types**
+
+Kubernetes supports several `hostPath` volume types that define how paths on the host are managed. For detailed information on supported types such as `Directory`, `File`, `Socket`, and `BlockDevice`, refer to the official documentation:
+
+[Kubernetes Documentation - hostPath Volume Types](https://kubernetes.io/docs/concepts/storage/volumes/#hostpath-volume-types)
 
 ---
+
+**Verification Across Pods on the Same Node**
+
+Since `hostPath` uses the underlying node’s filesystem, the data can be shared between different pods **only if they are scheduled on the same node**.
+
+To determine where the initial pod was scheduled:
+
+```bash
+kubectl get pods -o wide
+```
+
+Assuming the pod was created on a node named `my-second-cluster-worker2`, we can now schedule a new pod on the same node to validate data sharing:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hostpath-verify
+spec:
+  nodeName: my-second-cluster-worker2
+  containers:
+  - name: busybox-container
+    image: busybox
+    command: ["sh", "-c", "cat /data && sleep 3600"]
+    volumeMounts:
+    - mountPath: /data
+      name: host-volume
+  volumes:
+  - name: host-volume
+    hostPath:
+      path: /tmp/hostfile
+      type: FileOrCreate
+```
+
+To verify that the new pod can access the same file content:
+
+```bash
+kubectl exec hostpath-verify -- cat /data
+```
+
+You should see the output:
+```
+Hey you!!
+```
+
+This confirms that both pods are using the same file from the host node via `hostPath`.
+
+--- 
 
 ### **Evolution of Kubernetes Storage: From Built-In Drivers to CSI Plugins**
 
@@ -386,12 +451,9 @@ Originally, Kubernetes handled storage through **in-tree drivers**, which were h
 - **AWS Elastic Block Store (EBS)**  
 - **Google Compute Engine (GCE) Persistent Disk**  
 - **Azure Disk and File Storage**  
-- **OpenStack Cinder**  
-- **iSCSI**  
-- **Ceph RBD**  
+- **OpenStack Cinder** 
 - **GlusterFS**  
-- **NFS**  
-- **Fibre Channel**  
+- **cephfs**
 
 However, this approach had limitations:
 1. **Tight Coupling**: Updates for storage systems required Kubernetes releases, slowing innovation.  
