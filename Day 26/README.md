@@ -12,18 +12,19 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 
 ---
 
+
 # Table of Contents
 
 1.  [Introduction](#introduction)
 2.  [Ephemeral Storage](#ephemeral-storage)
     -   [EmptyDir](#emptydir)
-    - [**Demo:** emptyDir](#demo-emptydir)
+        - [**Demo:** emptyDir](#demo-emptydir)
     -   [Downward API](#downward-api)
-    -   [**Demo:** Environment Variables](#demo-downwardapi---environment-variables)
-    -   [**Demo:** hostPath](#demo-hostpath)
+        -   [**Demo:** Environment Variables](#demo-downwardapi---environment-variables)
+        -   [**Demo:** Files via Volumes](#demo-downwardapi---files-via-volumes)
 3.  [Persistent Storage](#persistent-storage)
     -   [hostPath](#hostpath)
-    -   [**Demo:** Environment Variables](#demo-downwardapi---environment-variables)
+         -   [**Demo:** hostPath](#demo-hostpath)
 4.  [Evolution of Kubernetes Storage: From Built-In Drivers to CSI Plugins](#evolution-of-kubernetes-storage-from-built-in-drivers-to-csi-plugins)
 4.  [Persistent Volumes (PVs) & Persistent Volume Claims (PVCs)](#persistent-volumes-pvs--persistent-volume-claims-pvcs)
     - [Access Modes in Kubernetes Persistent Volumes](#access-modes-in-kubernetes-persistent-volumes)
