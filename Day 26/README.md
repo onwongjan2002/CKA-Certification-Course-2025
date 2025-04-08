@@ -69,8 +69,8 @@ That’s where **volumes** come into play—specifically, an `emptyDir` volume. 
 
 
 Check out the **Day 24** content below:
-[Day 24 GitHub Notes](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2024)    
-[Day 24 YouTube Video](https://www.youtube.com/watch?v=5t3yHFoqK6g&t=12s&ab_channel=CloudWithVarJosh)
+**GitHub:** [Day 24 GitHub Notes](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2024)    
+**YouTube:** [Day 24 YouTube Video](https://www.youtube.com/watch?v=5t3yHFoqK6g&t=12s&ab_channel=CloudWithVarJosh)
 
 ---
 
@@ -164,8 +164,8 @@ Without the Downward API, these sidecars would need to **continuously poll the K
 For example, imagine you're running a monitoring agent as a sidecar, and you want to collect metrics or logs for all Pods within a specific namespace like `app1-ns`. If the agent doesn’t know **which Pod it's running in** or **which namespace it belongs to**, it wouldn't be able to label or filter that data correctly. The Downward API solves this problem by **injecting runtime-specific metadata directly into the container**, making it **self-aware**.
 
 👉 Explore **Day 21 (Sidecar Pattern)**:  
-[Day 21 - GitHub Notes](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2021)
-[Day 21 - YouTube Video](https://www.youtube.com/watch?v=VEwP_wF67Tw&ab_channel=CloudWithVarJosh)
+**GitHub:** [Day 21 GitHub Notes](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2021)
+**YouTube:** [Day 21 YouTube Video](https://www.youtube.com/watch?v=VEwP_wF67Tw&ab_channel=CloudWithVarJosh)
 
 ---
 
