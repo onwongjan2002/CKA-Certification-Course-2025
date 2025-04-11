@@ -9,10 +9,6 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 
 ---
 
-![Alt text](/images/25.png)
-
----
-
 
 # Table of Contents
 
@@ -41,6 +37,8 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 --- 
 
 ## Evolution of Storage in Kubernetes: From In-Tree to CSI Drivers
+
+![Alt text](/images/27a.png)
 
 Managing **persistent storage** in Kubernetes has come a long way. Initially, storage drivers were built directly into Kubernetes' core codebase, known as **in-tree volume plugins**. Over time, this tightly coupled model proved limiting, leading to the adoption of the **Container Storage Interface (CSI)**—a modular and extensible solution for storage integration.
 
@@ -214,6 +212,50 @@ Learn more: [Kubernetes Documentation on hostPath](https://kubernetes.io/docs/co
 
 ---
 
+### **Understanding `hostPath` in KIND: How Storage Works Under the Hood**
+
+![Alt text](/images/27b.png)
+
+When using KIND (Kubernetes IN Docker), it’s important to understand where your `hostPath` volumes are actually created — especially because Docker behaves differently across operating systems.
+
+#### **1. On Ubuntu/Linux**
+
+- On Linux distributions like **Ubuntu**, **Docker Engine runs natively** on the host OS.
+- So when you define a `hostPath` volume, like `/tmp/hostfile`, it points directly to the **host’s actual filesystem** (i.e., your Ubuntu machine).
+- The path `/tmp/hostfile` truly exists on the Ubuntu host, and the container will mount that exact path into the Pod.
+
+#### **2. On macOS and Windows**
+
+- Docker Engine **does not run natively** on macOS or Windows, since it requires a Linux kernel.
+- Docker Desktop creates a **lightweight Linux VM** internally (via **HyperKit** on macOS or **WSL2** on Windows) to run the Docker Engine.
+- KIND then runs each Kubernetes node (`control-plane`, `worker-1`, `worker-2`) as a **Docker container** inside that Linux VM.
+- When you define a `hostPath` in a Pod spec (e.g., `/tmp/hostfile`), it **does not point to your macOS or Windows host filesystem**.
+- Instead, it points to the **filesystem of the specific Docker container (the Kubernetes node) running that Pod**.
+  
+  > So, technically, the `hostPath` volume is **inside the container** representing your worker node — **not** on your macOS/Windows host, and **not even directly inside the lightweight Linux VM** used by Docker Desktop.
+
+---
+
+### **Key Takeaway**
+
+| Platform      | Docker Engine Runs On | `hostPath` Points To                            |
+|---------------|------------------------|-------------------------------------------------|
+| Ubuntu/Linux  | Natively               | Host's actual filesystem (e.g., `/tmp/hostfile`) |
+| macOS/Windows | Linux VM via Docker    | Filesystem **inside the Kubernetes node container** |
+
+---
+
+### **Why This Matters**
+
+When testing `hostPath` on macOS/Windows using KIND, any file you write via the volume:
+- Exists **only inside the worker node container**.
+- Is **not visible** on your macOS/Windows host filesystem.
+- Will be lost if the KIND cluster or node container is destroyed.
+
+This is important when you're simulating persistent storage, as `hostPath` is not portable across nodes and shouldn't be used in production — but is often used for demos or local testing.
+
+---
+
 ### Demo: hostPath
 
 In this demonstration, we showcase how to use the `hostPath` volume type in Kubernetes to mount a file from the host node into a container.
@@ -310,6 +352,7 @@ This confirms that both pods are using the same file from the host node via `hos
 
 ### Persistent Volumes (PVs) & Persistent Volume Claims (PVCs)
 
+![Alt text](/images/27c.png)
 #### **Persistent Volumes (PVs)**
 
 - **What is a PV?**  
@@ -327,6 +370,107 @@ This confirms that both pods are using the same file from the host node via `hos
   1. **Administrator:** Provisions PVs (or sets up Storage Classes for dynamic provisioning).  
   2. **Developer:** Creates a PVC in the Pod specification requesting specific storage attributes.  
   3. **Kubernetes:** Binds the PVC to a suitable PV, thereby making the storage available to the Pod.
+
+
+**Pods rely on Node resources—such as CPU, memory, and network—to run containers.** On the other hand, when a Pod requires **persistent storage**, it uses a **PersistentVolumeClaim (PVC)** to request storage from a **PersistentVolume (PV)**, which serves as the **actual storage backend**. This separation of compute and storage allows Kubernetes to manage them independently, improving flexibility and scalability.
+
+---
+
+### **Understanding Scope & Relationships of PV and PVC in Kubernetes**
+
+In Kubernetes, **PersistentVolumes (PVs)** and **PersistentVolumeClaims (PVCs)** play a central role in persistent storage — but they differ in how they're scoped and used.
+
+#### **PVs are Cluster-Scoped Resources**
+- A **PersistentVolume (PV)** is a **cluster-wide resource**, just like Nodes or StorageClasses.
+- This means it is **not tied to any specific namespace**, and it can be viewed or managed from anywhere within the cluster.
+- You can verify this using:
+  ```bash
+  kubectl api-resources | grep persistentvolume
+  ```
+  This shows that the resource `persistentvolumes` has **no namespace**, indicating it's **cluster-scoped**.
+
+#### **PVCs are Namespace-Scoped**
+- A **PersistentVolumeClaim (PVC)**, on the other hand, is a **namespaced resource**, just like Pods or Deployments.
+- This means it exists **within a specific namespace** and is only accessible by workloads (Pods) within that namespace.
+- You can verify this using:
+  ```bash
+  kubectl api-resources | grep persistentvolumeclaim
+  ```
+  This shows that `persistentvolumeclaims` are scoped within a namespace.
+
+---
+
+### **Why Is This Important?**
+
+Let’s say you have a namespace called `app1-ns`. If a PVC is created in `app1-ns` and binds to a PV, **only Pods in `app1-ns` can use that PVC**.
+
+If a Pod in `app2-ns` tries to reference the same PVC, it will fail — because the PVC is invisible and inaccessible outside its namespace.
+
+---
+
+### **1-to-1 Binding Relationship Between PVC and PV**
+
+- A **PVC can bind to only one PV**.
+- Similarly, **a PV can be bound to only one PVC**.
+- This is a **strict one-to-one relationship**, ensuring data integrity and predictable access control.
+- Once a PV is bound, its `claimRef` field is populated, and it cannot be claimed by any other PVC unless explicitly released.
+
+---
+
+### **Additional Key Points**
+- **PVCs request storage**; PVs **fulfill that request** if they match capacity, access mode, and storage class.
+- Once a PVC is bound, **it remains bound** until:
+  - The PVC is deleted.
+  - The PV is manually reclaimed or deleted (depending on the reclaim policy).
+- The reclaim policy (`Retain`, `Delete`, or deprecated `Recycle`) determines what happens to the PV after the PVC is deleted.
+
+---
+
+### **Example Scenario**
+
+Let’s say:
+- You create a PVC named `data-pvc` in the namespace `app1-ns`.
+- It binds to a cluster-scoped PV.
+- Only **Pods in `app1-ns`** can now reference this PVC.
+
+If a Pod in `app2-ns` tries to mount this PVC, it will result in an error like:
+```
+persistentvolumeclaims "data-pvc" not found
+```
+
+Because from `app2-ns`'s perspective, that PVC does not exist.
+
+---
+
+### **Kubernetes Persistent Storage Flow (Manual Provisioning)**
+
+![Alt text](/images/27c.png)
+
+| **Step** | **Role**                | **Action**                                                                                          | **Details / Notes**                                                                 |
+|----------|-------------------------|------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| 1        | **Developer**           | Requests 5Gi persistent storage for a Pod.                                                           | May request via a PVC or through communication with the Kubernetes Admin.          |
+| 2        | **Kubernetes Admin**    | Coordinates with Storage Admin for backend volume.                                                  | Backend storage could be SAN/NAS exposed via iSCSI, NFS, etc.                      |
+| 3        | **Storage Admin**       | Allocates a physical volume from a 500Ti storage pool.                                               | May involve LUN creation, NFS export, etc., based on the infrastructure.            |
+| 4        | **Kubernetes Admin**    | Creates a **PersistentVolume (PV)** representing the physical volume in Kubernetes.                 | Specifies capacity, `accessModes`, `volumeMode`, `storageClassName`, etc.          |
+| 5        | **Developer**           | Creates a **PersistentVolumeClaim (PVC)** requesting 5Gi with specific access and volume modes.     | PVC must match criteria defined in the PV.                                          |
+| 6        | **Kubernetes**          | Binds PVC to a suitable PV if all parameters match.                                                 | Matching criteria include: storage class, access mode, volume mode, size, etc.     |
+| 7        | **Pod**                 | References the PVC in its volume definition and mounts it in a container.                          | PVC acts as an abstraction; Pod doesn’t interact with the PV directly.             |
+
+---
+
+### **Important Notes**
+
+- **PV** is a **cluster-scoped** resource.
+- **PVC** is a **namespaced** resource.
+- One **PV can be claimed by only one PVC** (1:1 relationship).
+- The Pod must be in the **same namespace** as the PVC it is using.
+- Communication with physical storage is handled by either:
+  - **In-tree drivers** (legacy; e.g., `awsElasticBlockStore`, `azureDisk`)
+  - **CSI drivers** (modern; e.g., `ebs.csi.aws.com`, `azurefile.csi.azure.com`)
+
+> In many cases, developers are well-versed with Kubernetes and can handle the creation of **PersistentVolumeClaims (PVCs)** themselves. With the introduction of **StorageClasses**, the process of provisioning **PersistentVolumes (PVs)** has been **automated**—eliminating the need for Kubernetes administrators to manually coordinate with storage admins and pre-create PVs. When a PVC is created with a **StorageClass**, Kubernetes **dynamically provisions** the corresponding PV. We’ll explore StorageClasses in detail shortly.
+
+---
 
 #### **Access Modes in Kubernetes Persistent Volumes**
 
@@ -736,6 +880,8 @@ volumeBindingMode: WaitForFirstConsumer  # Ensures the volume is created in the 
    - This prevents orphaned resources and is the most common choice for dynamically provisioned storage.
 
 2. **WaitForFirstConsumer**:
+
+![Alt text](/images/27d.png)
    - In a Kubernetes cluster spanning multiple Availability Zones (AZs), **EBS volumes and EC2 instances are AZ-specific resources**.  
    - If a volume is immediately provisioned in one AZ when a PVC is created, and the Pod using the PVC is scheduled in another AZ, the volume cannot be mounted.  
    - The `WaitForFirstConsumer` mode ensures that the volume is created **only after the Pod is scheduled**, ensuring both the Pod and the volume are in the same AZ.  
