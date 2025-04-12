@@ -2,6 +2,7 @@
 
 ## Video reference for Day 27 is the following:
 
+[![Watch the video](https://img.youtube.com/vi/C6fqoSnbrck/maxresdefault.jpg)](https://www.youtube.com/watch?v=C6fqoSnbrck&ab_channel=CloudWithVarJosh)
 
 ---
 ## ⭐ Support the Project  
@@ -380,6 +381,8 @@ This confirms that both pods are using the same file from the host node via `hos
 
 In Kubernetes, **PersistentVolumes (PVs)** and **PersistentVolumeClaims (PVCs)** play a central role in persistent storage — but they differ in how they're scoped and used.
 
+![Alt text](/images/27e.png)
+
 #### **PVs are Cluster-Scoped Resources**
 - A **PersistentVolume (PV)** is a **cluster-wide resource**, just like Nodes or StorageClasses.
 - This means it is **not tied to any specific namespace**, and it can be viewed or managed from anywhere within the cluster.
@@ -414,6 +417,8 @@ If a Pod in `app2-ns` tries to reference the same PVC, it will fail — because 
 - Similarly, **a PV can be bound to only one PVC**.
 - This is a **strict one-to-one relationship**, ensuring data integrity and predictable access control.
 - Once a PV is bound, its `claimRef` field is populated, and it cannot be claimed by any other PVC unless explicitly released.
+
+> **`claimRef`** is a field in a **PersistentVolume (PV)** that records which **PersistentVolumeClaim (PVC)** has successfully claimed it. It includes details like the PVC’s name and namespace. This field ensures that the PV is not mistakenly claimed by any other PVC, enforcing a **one-to-one binding** between the PV and its assigned PVC.
 
 ---
 
@@ -836,6 +841,8 @@ A **Storage Class** in Kubernetes is a way to define different storage configura
 1. Simplifies the storage lifecycle by automating PV creation using dynamic provisioning.  
 2. Offers flexibility to define and manage multiple storage tiers.  
 3. Optimizes storage resource allocation, especially in environments spanning multiple Availability Zones (AZs).
+
+> StorageClass takes over the role of provisioning PVs dynamically, replacing many of the static configurations you used to define in PVs manually. But not everything from PV moves into the StorageClass—some things like **access modes, size, volumeMode** still come from PVC.
 
 ---
 
