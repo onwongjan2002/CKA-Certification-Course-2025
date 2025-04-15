@@ -510,10 +510,10 @@ This will display the content served by NGINX from the ConfigMap-mounted `index.
 
 In production environments, applications often require access to sensitive data such as:
 
-- Database credentials
-- API tokens
-- SSH private keys
-- TLS certificates
+- **Database credentials:** Used by applications to authenticate securely with backend databases.
+- **API tokens:** Serve as secure keys to authorize and access APIs or third-party services.
+- **SSH private keys:** Enable secure, encrypted access to remote systems over SSH.
+- **TLS certificates:** Provide encryption and identity verification for secure network communication (e.g., HTTPS).
 
 Storing these directly in your container image or Kubernetes manifests as plain text is insecure. **Kubernetes Secrets** provide a way to manage this data securely.
 
