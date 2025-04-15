@@ -4,7 +4,7 @@ metadata:
   name: frontend-cm
 data:
   APP: "frontend"
-  ENVIRONMENT: "development"
+  ENVIRONMENT: "production"
   index.html: |
     <!DOCTYPE html>
     <html>

@@ -9,16 +9,38 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 
 ---
 
+## **Table of Contents**
+
+1. [Introduction](#introduction)
+2. [ConfigMaps](#configmaps)
+   - [Why Do We Need ConfigMaps?](#why-do-we-need-configmaps)
+   - [What is a ConfigMap?](#what-is-a-configmap)
+   - [Using Environment Variables Without ConfigMap](#without-configmap-hardcoded-environment-variables)
+   - [Demo 1: Using ConfigMap as Environment Variables](#demo-1-using-configmap-as-environment-variables)
+   - [Demo 2: Using ConfigMap as a Configuration File (Volume Mount)](#demo-2-using-configmap-as-a-configuration-file-volume-mount)
+   - [Best Practices for ConfigMap](#best-practices-for-configmap)
+8. [Kubernetes Secrets](#kubernetes-secrets)
+   - [Why Do We Need Secrets in Kubernetes?](#why-do-we-need-secrets-in-kubernetes)
+   - [What is a Kubernetes Secret?](#what-is-a-kubernetes-secret)
+   - [Encoding vs. Encryption](#encoding-vs-encryption)
+   - [Demo 1: Injecting Secrets into a Pod](#demo-1-injecting-secrets-into-a-pod)
+   - [Demo 2: Mounting Secrets as Files](#alternative-mount-secret-as-files)
+   - [Best Practices for Secrets](#best-practices-for-using-kubernetes-secrets)
+15. [Understanding Dynamic Updates with ConfigMaps and Secrets](#understanding-dynamic-updates-with-configmaps-and-secrets)
+16. [Conclusion](#conclusion)
+17. [References](#references)
+
 
 ### **Introduction**
 
-In modern DevOps practices, it’s important to separate configuration data from application logic. Hardcoding environment-specific settings (like service URLs, logging levels, or deployment profiles) into container images makes applications less portable and harder to maintain.
+As modern applications grow in complexity, separating configuration and secrets from application logic becomes essential for portability, maintainability, and security. Kubernetes provides native support for this through **ConfigMaps** and **Secrets**. ConfigMaps help manage non-sensitive configuration data, while Secrets handle sensitive data like passwords and API keys.
 
-This is where **ConfigMaps** come in.
+In this session, we will learn how to use ConfigMaps and Secrets effectively in Kubernetes. Through hands-on demos, you’ll explore injecting configurations as environment variables, command-line arguments, and files, and understand how Kubernetes handles updates to these objects at runtime. You’ll also learn the key differences between ConfigMaps and Secrets, and best practices for secure and scalable usage in real-world environments.
 
 ---
 
 ## ConfigMaps
+
 ### **Why Do We Need ConfigMaps?**
 
 In real-world Kubernetes deployments:
@@ -125,6 +147,10 @@ Apply:
 kubectl apply -f frontend-cm.yaml
 ```
 
+Here's an improved and concise version of your sentence:
+
+> **Note:** Always apply the **ConfigMap before the Deployment**, so that the pods can reference and consume the configuration data during startup.
+
 ---
 
 ### Step 2: Reference ConfigMap in Deployment
@@ -226,6 +252,12 @@ data:
     </body>
     </html>
 ```
+The `|` tells YAML:
+
+> “Treat the following lines as a **literal block of text**. Preserve all line breaks and indentation exactly as they appear.”
+
+In YAML, the `|` symbol is called a **block scalar indicator** — specifically, it's used for **literal block style**.
+This is especially useful when you're writing multi-line values, such as **HTML**, **scripts**, or **configuration files** inside a YAML field.
 
 Apply:
 
@@ -396,13 +428,13 @@ kubectl apply -f frontend-svc.yaml
 
 ## **Verification**
 
-### 1. Get the Pod name
+#### 1. Get the Pod name
 
 ```bash
 kubectl get pods -l app=frontend
 ```
 
-### 2. Verify the `index.html` content inside the container
+#### 2. Verify the `index.html` content inside the container
 
 ```bash
 kubectl exec -it <pod-name> -- cat /usr/share/nginx/html/index.html
@@ -422,7 +454,7 @@ kubectl exec -it <pod-name> -- cat /usr/share/nginx/html/index.html
 
 ---
 
-### 3. Access the Application via NodePort
+#### 3. Access the Application via NodePort
 
 You can access the application using:
 
@@ -440,9 +472,12 @@ curl http://<Node-IP>:31000
 
 ---
 
-### 4. **If You're Using KIND (Kubernetes in Docker)**
+#### 4. **If You're Using KIND (Kubernetes in Docker)**
 
 If you've been following this course using a **KIND cluster**, the worker nodes are running inside a Docker container. In this case, KIND maps NodePorts to your host (Mac/Windows/Linux) via localhost.
+
+**For more details, refer to the Day 12 GitHub notes:**  
+[Setting up a KIND Cluster with NodePort Service](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2012#setting-up-a-kind-cluster-with-nodeport-service)
 
 So you can directly access the app using:
 
@@ -461,7 +496,7 @@ This will display the content served by NGINX from the ConfigMap-mounted `index.
 --- 
 
 
-## **Best Practices for ConfigMap**
+### **Best Practices for ConfigMap**
 
 - Avoid storing sensitive data in ConfigMaps.
 - Mount only the necessary keys using `items` to limit volume content.
@@ -501,92 +536,147 @@ Accessible to Pods via:
 
 ---
 
+### **Important Distinction: Encoding vs. Encryption**
+
+It's crucial to understand that **Kubernetes Secrets use base64 *encoding*, not encryption**.  
+This means the data is **obfuscated but not secured**. Anyone who gains access to the Secret object can **easily decode** it.
+
+**Why Use Encoding (e.g., base64)?**
+
+Encoding is useful when you want to **hide the data from casual observation**, such as:
+
+- Preventing someone looking over your shoulder from instantly seeing a password.
+- Making binary data safe to transmit in systems that expect text.
+
+However, **encoding is not encryption**. It's **not secure** by itself.  
+> Anyone who has access to your encoded data can easily decode it.
+
+For example, base64 is **reversible** using a simple decoding command.  
+If you need to **protect sensitive data**, you should use **encryption** or a Kubernetes **Secret**, which at least provides better handling and access controls.
+
+We'll see how to **encode** and **decode** in the demo section.
+
+---
+
+### **Encoding vs. Encryption**
+
+| Feature         | Encoding                        | Encryption                           |
+|----------------|----------------------------------|--------------------------------------|
+| **Purpose**     | Data formatting for safe transport | Data protection and confidentiality |
+| **Reversible**  | Yes (easily reversible)          | Yes (only with the correct key)      |
+| **Security**    | Not secure                       | Secure                                |
+| **Use Case**    | Data transmission/storage compatibility | Protect sensitive data (passwords, tokens) |
+| **Example**     | Base64, URL encoding             | AES, RSA, TLS                        |
+| **Tool Needed to Decode** | None (any base64 tool)         | Requires decryption key              |
+
+---
+
+> **Note:** If you need to store sensitive data securely, consider enabling **encryption at rest** for Secrets in Kubernetes and restrict access using RBAC.
+
+---
+
 ### **Demo 1: Injecting Secrets into a Pod**
 
-We’ll enhance the existing `backend-deploy` and `backend-svc` resources by securely injecting database credentials using a Kubernetes Secret.
+We’ll enhance the existing `frontend-deploy` and `frontend-svc` resources by securely injecting database credentials using a Kubernetes Secret.
 
+For this demo, we’ll build on the `frontend-deploy` configuration introduced in **Day 12** of this course. If you'd like a deeper understanding of **Kubernetes Services**, feel free to explore the following resources:
 
-For this demo, we’ll build on the `backend-deploy` configuration introduced in **Day 12** of this course. If you'd like a deeper understanding of **Kubernetes Services**, feel free to explore the following resources:
-
-- [Day 12 GitHub Notes](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2012)
-
+- [Day 12 GitHub Notes](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2012)  
 - [Day 12 YouTube Video](https://www.youtube.com/watch?v=92NB8oQBtnc)
 
 These resources provide clear examples and explanations of how Kubernetes Services work in real-world deployments.
 
-
+---
 
 ### **Step 1: Create the Secret**
 
-Create a Secret manifest `backend-secret.yaml`:
+Create a Secret manifest `frontend-secret.yaml`:
 
 ```yaml
 apiVersion: v1
-kind: Secret
+kind: Secret  # Declares the resource type as a Secret.
 metadata:
-  name: backend-secret
-type: Opaque
+  name: frontend-secret  # Unique name for this Secret object.
+type: Opaque  # 'Opaque' means this Secret contains user-defined (arbitrary) key-value pairs.
+
 data:
-  DB_USER: YmFja2VuZHVzZXI=          # base64 for 'backenduser'
-  DB_PASSWORD: c3VwZXJzZWNyZXQ=      # base64 for 'supersecret'
+  DB_USER: ZnJvbnRlbmR1c2Vy  # Base64-encoded value of 'frontenduser'
+  DB_PASSWORD: ZnJvbnRlbmRwYXNz  # Base64-encoded value of 'frontendpass'
+
+  # NOTE:
+  # Values under the 'data:' section must be base64-encoded.
+  # These can be referenced by Pods to inject as environment variables or mounted as files.
 ```
 
 To generate the base64-encoded values:
 
 ```bash
-echo -n 'backenduser' | base64      # YmFja2VuZHVzZXI=
-echo -n 'supersecret' | base64      # c3VwZXJzZWNyZXQ=
+echo -n 'frontenduser' | base64      # ZnJvbnRlbmR1c2Vy
+echo -n 'frontendpass' | base64      # ZnJvbnRlbmRwYXNz
 ```
+
+To decode the values on a Linux system:
+
+```bash
+echo 'ZnJvbnRlbmR1c2Vy' | base64 --decode   # frontenduser
+echo 'ZnJvbnRlbmRwYXNz' | base64 --decode   # frontendpass
+```
+
+> **Note:** The `-n` flag with `echo` ensures no trailing newline is added before encoding.
 
 Apply the Secret:
 
 ```bash
-kubectl apply -f backend-secret.yaml
+kubectl apply -f frontend-secret.yaml
 ```
 
 ---
 
 ### **Step 2: Update the Deployment to Use the Secret**
 
-Here’s the updated deployment manifest (`backend-deploy.yaml`) using the `backend-secret` Secret as environment variables:
+Here’s the updated deployment manifest (`frontend-deploy.yaml`) using the `frontend-secret` Secret as environment variables:
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend-deploy
+  name: frontend-deploy  # Name of the Deployment
 spec:
-  replicas: 3
+  replicas: 1  # Run a single replica of the frontend Pod
   selector:
     matchLabels:
-      app: backend
+      app: frontend  # This selector ensures the Deployment manages only Pods with this label
   template:
     metadata:
       labels:
-        app: backend
+        app: frontend  # Label added to the Pod; matches the selector above
     spec:
       containers:
-        - name: backend-container
-          image: hashicorp/http-echo
-          args:
-            - "-text=Hello from Backend"
+        - name: frontend-container  # Name of the container running inside the Pod
+          image: nginx  # Using official NGINX image
           env:
-            - name: DB_USER
+            - name: DB_USER  # Environment variable DB_USER inside the container
               valueFrom:
                 secretKeyRef:
-                  name: backend-secret
-                  key: DB_USER
-            - name: DB_PASSWORD
+                  name: frontend-secret  # Name of the Secret resource
+                  key: DB_USER  # Key in the Secret to pull the value from
+            - name: DB_PASSWORD  # Environment variable DB_PASSWORD inside the container
               valueFrom:
                 secretKeyRef:
-                  name: backend-secret
-                  key: DB_PASSWORD
+                  name: frontend-secret  # Same Secret object
+                  key: DB_PASSWORD  # Another key from the Secret object
+
+  # The environment variables DB_USER and DB_PASSWORD will be injected into the container at runtime.
+  # Kubernetes will automatically base64-decode the values from the Secret and inject them as plain-text.
+  # That means inside the container, these environment variables will appear as plain-text,
+  # even though they are stored in base64-encoded format in the Kubernetes Secret object.
+
 ```
 
 Apply the deployment:
 
 ```bash
-kubectl apply -f backend-deploy.yaml
+kubectl apply -f frontend-deploy.yaml
 ```
 
 ---
@@ -596,7 +686,7 @@ kubectl apply -f backend-deploy.yaml
 1. List the running Pods:
 
 ```bash
-kubectl get pods -l app=backend
+kubectl get pods -l app=frontend
 ```
 
 2. Exec into one of the Pods:
@@ -608,8 +698,8 @@ kubectl exec -it <pod-name> -- /bin/sh
 3. Print the environment variables:
 
 ```bash
-echo $DB_USER       # Expected output: backenduser
-echo $DB_PASSWORD   # Expected output: supersecret
+echo $DB_USER       # Expected output: frontenduser
+echo $DB_PASSWORD   # Expected output: frontendpass
 ```
 
 ---
@@ -620,54 +710,50 @@ If you prefer to mount secrets as files (instead of environment variables), here
 
 #### Update container spec:
 
+Certainly! Here's your `volumeMounts` section with clear and concise inline comments:
+
 ```yaml
         volumeMounts:
-          - name: secret-volume
-            mountPath: /etc/secrets
-            readOnly: true
+          - name: secret-volume               # Refers to the volume named 'secret-volume' defined in the 'volumes' section
+            mountPath: /etc/secrets           # Directory inside the container where the secret files will be mounted
+            readOnly: true                    # Ensures the mounted volume is read-only to prevent modifications from within the container
 ```
+**Additional Notes:**
+
+- Each key in the Secret will be mounted as a **separate file** under `/etc/secrets`.
+- For example, if your Secret has `DB_USER` and `DB_PASSWORD`, you’ll find:
+  ```bash
+  /etc/secrets/DB_USER
+  /etc/secrets/DB_PASSWORD
+  ```
+- These files will contain the **decoded plain-text values** from the Secret.
+
 
 #### Add volume to spec:
 
+Certainly! Here's the corresponding `volumes:` section with detailed inline comments to pair with the `volumeMounts` section above:
+
 ```yaml
       volumes:
-        - name: secret-volume
+        - name: secret-volume                # The volume name referenced in volumeMounts
           secret:
-            secretName: backend-secret
-```
+            secretName: frontend-secret     # The name of the Secret object from which to pull data
 
-This will create files at `/etc/secrets/DB_USER` and `/etc/secrets/DB_PASSWORD`.
+            # Optional: you could use 'items' here to mount only specific keys
+            # For example:
+            # items:
+            #   - key: DB_USER
+            #     path: db-user.txt
+            #   - key: DB_PASSWORD
+            #     path: db-password.txt
 
----
-
-### **Service (Unchanged)**
-
-The existing service manifest remains valid and doesn’t require modification:
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: backend-svc
-spec:
-  type: ClusterIP
-  ports:
-    - protocol: TCP
-      port: 9090
-      targetPort: 5678
-  selector:
-    app: backend
-```
-
-Apply the service:
-
-```bash
-kubectl apply -f backend-svc.yaml
+            # Without 'items', all keys from the Secret will be mounted as individual files
+            # in the mountPath directory (e.g., /etc/secrets/DB_USER, /etc/secrets/DB_PASSWORD)
 ```
 
 ---
 
-## **Best Practices for Using Kubernetes Secrets**
+### **Best Practices for Using Kubernetes Secrets**
 
 - Avoid storing secrets in Git repositories.
 - Use `kubectl create secret` or Helm to avoid manually encoding data.
@@ -686,3 +772,25 @@ kubectl apply -f backend-svc.yaml
 - Kubernetes handles dynamic updates using **symlinks** to new file versions, but the application must **re-read the files** to detect changes.
 - When mounting individual keys using `subPath`, the file is **copied**, not symlinked, so updates to the ConfigMap or Secret **will not propagate**.
 - To enable live updates without restarting pods, prefer **volume mounts without `subPath`** and ensure the application supports **hot reloading** or use a **config-reloader**.
+
+---
+
+## **Conclusion**
+
+In this module, you learned how to effectively use **Kubernetes ConfigMaps and Secrets** to decouple configuration and sensitive data from your application code. You explored how to inject this data into pods as environment variables and volume-mounted files, and understood the limitations of dynamic updates when using different mounting strategies.
+
+You also learned how Secrets differ from ConfigMaps in terms of intended usage and security posture, and reviewed practical examples of how to securely manage credentials inside your Kubernetes cluster. By following best practices—such as enabling encryption at rest, restricting RBAC access, and avoiding hardcoded credentials—you can build more secure and maintainable Kubernetes-native applications.
+
+As you move forward in your DevOps journey, mastering ConfigMaps and Secrets will become an essential part of deploying applications reliably and securely in any Kubernetes environment.
+
+---
+
+## **References**
+
+- [ConfigMaps Overview](https://kubernetes.io/docs/concepts/configuration/configmap/)
+- [Secrets Overview](https://kubernetes.io/docs/concepts/configuration/secret/)
+- [Managing Secrets Using kubectl](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl/)
+- [Mounting ConfigMaps as Volumes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)
+- [Using SubPath to Mount Individual Files](https://kubernetes.io/docs/concepts/storage/volumes/#using-subpath)
+
+---
