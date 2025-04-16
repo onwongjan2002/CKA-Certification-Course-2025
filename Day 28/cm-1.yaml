@@ -3,5 +3,5 @@ kind: ConfigMap
 metadata:
   name: frontend-cm
 data:
-  APP: "frontend"
+  APP: "backend"
   ENVIRONMENT: "production"
