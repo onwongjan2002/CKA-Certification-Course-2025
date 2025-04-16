@@ -1,4 +1,4 @@
-# Day 28: Kubernetes ConfigMaps and Secrets | CKA Course 2025
+# Day 28: Kubernetes ConfigMaps & Secrets Explained with Demos | CKA Course 2025
 
 ## Video reference for Day 28 is the following:
 
@@ -63,7 +63,7 @@ Pods can consume ConfigMaps in three primary ways:
 2. As **command-line arguments** (Less Common)
 3. As **configuration files via mounted volumes**
 
-> **Important:** ConfigMaps do not provide encryption or secrecy. For sensitive information, use a **Secret** instead.
+> **Important:** ConfigMaps do not provide encoding. For sensitive information, use a **Secret** instead.
 
 
 
@@ -146,8 +146,6 @@ Apply:
 ```bash
 kubectl apply -f frontend-cm.yaml
 ```
-
-Here's an improved and concise version of your sentence:
 
 > **Note:** Always apply the **ConfigMap before the Deployment**, so that the pods can reference and consume the configuration data during startup.
 
@@ -344,7 +342,6 @@ volumes:
         - key: index.html
           path: index.html
 ```
-
 ---
 
 ### What if you *do* want to mount the ConfigMap **as a single file**?
