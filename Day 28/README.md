@@ -1,7 +1,8 @@
-# Day 28: Kubernetes ConfigMaps & Secrets Explained with Demos | CKA Course 2025
+# Day 28: Kubernetes ConfigMaps & Secrets Explained | Production-Ready Skills | CKA Course 2025
 
 ## Video reference for Day 28 is the following:
 
+[![Watch the video](https://img.youtube.com/vi/9vch82LomtE/maxresdefault.jpg)](https://www.youtube.com/watch?v=9vch82LomtE&ab_channel=CloudWithVarJosh)
 
 ---
 ## ⭐ Support the Project  
@@ -30,6 +31,7 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 16. [Conclusion](#conclusion)
 17. [References](#references)
 
+---
 
 ### **Introduction**
 
@@ -220,6 +222,47 @@ Expected Output:
 APP=frontend
 ENVIRONMENT=production
 ```
+
+Got it — you're absolutely right.  
+The correct DevOps/Kubernetes terminology is "**imperatively**," not "manually."  
+Here’s the improved and properly polished version you asked for:
+
+---
+
+**NOTE:** I forgot to cover this in the demo, but you can also **create a ConfigMap imperatively** using the `kubectl create configmap` command.  
+For example:
+
+```bash
+kubectl create configmap <name-of-configmap> --from-literal=key1=value1 --from-literal=key2=value2
+```
+
+A real-world example would be:
+
+```bash
+kubectl create configmap frontend-cm --from-literal=APP=frontend --from-literal=ENVIRONMENT=production
+```
+
+> This method is quick and useful for creating simple ConfigMaps **imperatively** from the command line, without needing to write and apply a YAML manifest.
+
+Awesome — here's a natural extension you can add, keeping the same tone and flow:
+
+---
+
+**When to Use Imperative vs Declarative Approach**
+
+- **Imperative Commands (`kubectl create configmap`)** are best when you:
+  - Need to quickly create a ConfigMap for testing or small demos.
+  - Are experimenting or working interactively.
+  - Don't need to track the resource in version control (like Git).
+
+- **Declarative Approach (YAML manifests + `kubectl apply -f`)** is preferred when you:
+  - Are working in production environments.
+  - Want your ConfigMaps (and all Kubernetes resources) to be version-controlled.
+  - Need better team collaboration, auditing, and repeatable deployments.
+
+> **Rule of Thumb:**  
+> Use **imperative** for quick, temporary tasks.  
+> Use **declarative** for production-grade, repeatable, and auditable setups.
 
 ---
 
