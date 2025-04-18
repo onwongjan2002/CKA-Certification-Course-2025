@@ -223,10 +223,6 @@ APP=frontend
 ENVIRONMENT=production
 ```
 
-Got it — you're absolutely right.  
-The correct DevOps/Kubernetes terminology is "**imperatively**," not "manually."  
-Here’s the improved and properly polished version you asked for:
-
 ---
 
 **NOTE:** I forgot to cover this in the demo, but you can also **create a ConfigMap imperatively** using the `kubectl create configmap` command.  
