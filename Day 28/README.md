@@ -240,10 +240,6 @@ kubectl create configmap frontend-cm --from-literal=APP=frontend --from-literal=
 
 > This method is quick and useful for creating simple ConfigMaps **imperatively** from the command line, without needing to write and apply a YAML manifest.
 
-Awesome — here's a natural extension you can add, keeping the same tone and flow:
-
----
-
 **When to Use Imperative vs Declarative Approach**
 
 - **Imperative Commands (`kubectl create configmap`)** are best when you:
