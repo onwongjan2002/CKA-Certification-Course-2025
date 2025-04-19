@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: hello-cronjob
+spec:
+  schedule: "*/1 * * * *"  # Every 1 minute
+  jobTemplate:
+    spec:
+      completions: 1
+      template:
+        spec:
+          containers:
+            - name: hello
+              image: busybox
+              command: ["bin/sh", "-c", "echo Hello from CronJob! && sleep 10"]
+          restartPolicy: Never
