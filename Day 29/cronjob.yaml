@@ -4,6 +4,7 @@ metadata:
   name: hello-cronjob
 spec:
   schedule: "*/1 * * * *"  # Every 1 minute
+  ttlSecondsAfterFinished: 60  # Automatically deletes the Pod 60 seconds after it completes
   jobTemplate:
     spec:
       completions: 1

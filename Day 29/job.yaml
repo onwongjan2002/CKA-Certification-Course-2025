@@ -4,13 +4,17 @@ metadata:
   name: hello-job
 spec:
   ttlSecondsAfterFinished: 60
-  completions: 1  # Number of successful runs before job is considered complete
-  backoffLimit: 4 # Number of retries before considering job failed
+  completions: 2
+  parallelism: 2
+  backoffLimit: 4
   template:
     spec:
       containers:
         - name: hello
           image: busybox
           command: ["bin/sh", "-c", "echo Hello from the Job! && sleep 10"]
-      restartPolicy: Never  # Jobs must use Never or OnFailure. Never creates a new Pod on failure; OnFailure restarts the same Pod.
+      restartPolicy: Never
+
+---
+
       

@@ -114,7 +114,17 @@ tolerations:
   - operator: Exists
 ```
 
-This **toleration** allows the kube-proxy Pods to **ignore any taints** and thus **run even on control-plane nodes**.
+**What does it mean when `operator: Exists` is used without a `key`?**
+
+- **No key specified** means the pod **tolerates *any* taint on the node** — regardless of key, value, or taint source.
+- As long as the `effect` matches (or if no effect is specified, it tolerates any effect too), **the pod can be scheduled**.
+
+In kube-proxy's case:
+
+- kube-proxy must run on **all nodes** — control plane nodes, worker nodes, tainted nodes — everywhere.
+- Kubernetes can't predict what taints the nodes may have (some clusters are custom).
+- Instead of listing specific taint keys, kube-proxy's DaemonSet says:
+  > "I don't care what taints the node has. I need to run there anyway."
 
 ---
 
@@ -293,8 +303,12 @@ You will see that **Kubernetes automatically recreates the missing Pod** on the 
 
 ## **Understanding Jobs and CronJobs in Kubernetes**
 
+
 While Deployments are used for running long-running applications or services, sometimes you need to run **one-off tasks** — tasks that **start, complete, and exit**.  
 This is where **Jobs** and **CronJobs** come into the picture.
+
+> **Note:**  
+> Jobs and CronJobs are **not part of the CKA exam curriculum**, but knowing about them provides a broader understanding of Kubernetes controllers and prepares you better for real-world production environments.
 
 ---
 
@@ -338,9 +352,14 @@ spec:
   ttlSecondsAfterFinished: 60
   # This field tells Kubernetes to automatically delete the Job object 60 seconds after it finishes (either success or failure).
   # Useful for keeping the cluster clean and avoiding accumulation of completed Jobs.
-  completions: 1
-  # Specifies how many successful completions are needed for the Job to be considered finished.
-  # Here, we require just 1 successful Pod run.
+  completions: 2  
+  # Total number of successful Pod completions needed for the Job to succeed.
+  # - If set to 1: Only one Pod needs to complete successfully for the Job to finish.
+  # - If set to 2: Two Pods must each complete successfully (sequentially or in parallel, depending on 'parallelism').
+  parallelism: 2  
+  # Number of Pods that can run concurrently.
+  # - If parallelism is 2 and completions is 2, both Pods can run at the same time.
+  # - If parallelism is 1 and completions is 2, Pods will run one after another (sequentially).
   backoffLimit: 4
   # Specifies how many times Kubernetes should retry a failed Pod before considering the Job itself as failed.
   # If the Pod fails 4 times, the Job will be marked as failed.
@@ -352,15 +371,30 @@ spec:
           command: ["bin/sh", "-c", "echo Hello from the Job! && sleep 10"]
           # Container command that prints a message and then sleeps for 10 seconds before exiting.
       restartPolicy: Never
-      # Important: Jobs must set restartPolicy to either Never or OnFailure.
-      # - Never: If the container fails, Kubernetes will create a new Pod for retry.
-      # - OnFailure: If the container fails, Kubernetes will try restarting the same Pod on the same node.
-      # In most simple Job cases, Never is preferred for clean retries via new Pods.
-
+      # Specifies that if a container inside the Pod fails, the kubelet will not restart the container.
+      # The Pod will transition to Failed status once the container exits with a non-zero (error) code.
+      # The Job controller, not the kubelet, handles retries by creating a new Pod according to the Job's backoffLimit policy.
+      # Pods are immutable objects; restartPolicy only governs container restarts within existing Pods:
+      # - restartPolicy: Always allows container restarts within a Pod (common in Deployments).
+      # - restartPolicy: Never ensures no container restarts; a new Pod is created by the Job controller if needed (common in Jobs).
 ```
 
-> **Note:**  
-> The `restartPolicy` must be set to `Never` (or `OnFailure`) for Pods managed by a Job.
+**Detailed Behavior:**
+
+- **The kubelet** is responsible for **restarting containers within an existing Pod**, but only if the `restartPolicy` is set to `Always` or `OnFailure`.  
+  - Example: In a **ReplicaSet**, if a container crashes, the kubelet will **restart the container** within the same Pod on the same node.
+  - If the `restartPolicy` is set to `OnFailure`, the kubelet will restart the container **within the same Pod**, but only when the container fails (i.e., exits with a non-zero exit code), not when it completes successfully.
+
+- **The kubelet does NOT recreate Pods**:  
+  - Pods are **immutable**—once a Pod fails or completes, the kubelet does not recreate it. Pod recreation is handled by higher-level controllers like **Jobs**, **Deployments**, or **ReplicaSets**.
+
+- **For Jobs**:  
+  - If `restartPolicy: Never`, the kubelet will not restart the container. The Pod transitions to the `Failed` phase once the container exits with an error.
+  - The **Job controller** (at the Kubernetes API level) detects the failed Pod and decides whether to create a new Pod for retry based on the Job’s `backoffLimit` policy.
+  - While the kubelet manages containers within Pods, the **Job controller** is responsible for handling Pod retries and determining whether new Pods need to be created for subsequent attempts.
+
+> **Key Reminder**: The kubelet only restarts containers within a Pod (if `restartPolicy: Always` or `OnFailure`). **Pod recreation** (for retries) is the responsibility of controllers like **Jobs**, or **ReplicaSets**.
+
 
 ---
 
@@ -412,24 +446,6 @@ A CronJob creates a **Job** according to the **cron schedule** you specify.
 
 ---
 
-## **Helpful Resources for Kubernetes CronJobs**
-
----
-
-## **Common Cron Expressions for Kubernetes CronJobs**
-
-| Cron Expression | Meaning | Usage Example |
-|:----------------|:--------|:--------------|
-| `*/5 * * * *` | Every 5 minutes | Health checks, frequent lightweight jobs. |
-| `0 * * * *` | Every hour at minute 0 | Hourly database backups or report generation. |
-| `0 2 * * *` | Every day at 2 AM | Nightly full system backups or log archiving. |
-| `0 0 * * 0` | Every Sunday at midnight | Weekly cleanup tasks, billing cycle resets. |
-| `30 9 * * 1-5` | At 9:30 AM, Monday to Friday | Business-hours notifications, weekday-only reports. |
-
-> **Pro Tip:** Kubernetes CronJobs use **UTC time** internally, not your local timezone — be careful while setting schedules!
-
----
-
 ## **Understanding Cron Expression Fields**
 
 | Position | Field | Allowed Values | Meaning |
@@ -461,6 +477,18 @@ A CronJob creates a **Job** according to the **cron schedule** you specify.
 
 This format helps you **quickly understand and build cron expressions** without memorizing each field separately.
 
+### **Common Cron Expressions for Kubernetes CronJobs**
+
+| Cron Expression | Meaning | Usage Example |
+|:----------------|:--------|:--------------|
+| `*/5 * * * *` | Every 5 minutes | Health checks, frequent lightweight jobs. |
+| `0 * * * *` | Every hour at minute 0 | Hourly database backups or report generation. |
+| `0 2 * * *` | Every day at 2 AM | Nightly full system backups or log archiving. |
+| `0 0 * * 0` | Every Sunday at midnight | Weekly cleanup tasks, billing cycle resets. |
+| `30 9 * * 1-5` | At 9:30 AM, Monday to Friday | Business-hours notifications, weekday-only reports. |
+
+> **Pro Tip:** Kubernetes CronJobs use **UTC time** internally, not your local timezone — be careful while setting schedules!
+
 
 > If you would like assistance in writing cron expressions manually, you can use **[Crontab Guru](https://crontab.guru/)** — an excellent online tool where you can **create**, **test**, and **validate** cron schedules easily.
 
@@ -480,20 +508,27 @@ Save the following YAML as `cronjob.yaml`:
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: hello-cronjob  # Name of the CronJob resource.
+  name: hello-cronjob
 spec:
-  schedule: "*/1 * * * *"  # Cron expression: Run the Job every 1 minute (using crontab syntax).
+  schedule: "*/1 * * * *"  # Cron expression specifying the job to run every 1 minute
+  ttlSecondsAfterFinished: 60  # Automatically deletes the Pod 60 seconds after it completes
   jobTemplate:
     spec:
-      completions: 1  # Number of successful Pod completions required for the Job to be marked as complete.
+      completions: 2
+        # Specifies that 2 successful Pod completions are required for the CronJob's Job to be considered complete.
+        # Each Pod must complete successfully (exit with status 0) for the job to be marked as finished.
+        # In this case, CronJob will wait until both Pods have successfully completed.      
+      parallelism: 2
+        # Specifies that 2 Pods should run concurrently for each execution of the CronJob.
+        # This means that when the CronJob is triggered, both Pods will start simultaneously.
+        # The Pods will run in parallel to perform the task faster, and the CronJob will wait until both have completed.      
       template:
         spec:
           containers:
             - name: hello
-              image: busybox  # Lightweight base image for running simple shell commands.
-              command: ["bin/sh", "-c", "echo Hello from CronJob! && sleep 10"]  # Print a message and sleep for 10 seconds before exiting.
-          restartPolicy: Never  # Must be Never or OnFailure. Never creates a new Pod for retries; OnFailure restarts the same Pod in place.
-
+              image: busybox
+              command: ["bin/sh", "-c", "echo Hello from CronJob! && sleep 10"]
+          restartPolicy: Never  # Ensures Pods don't restart; they must be considered completed or failed based on the task's outcome.
 ```
 
 > **Note:**  
@@ -535,23 +570,6 @@ After every minute, a new Job should be created automatically by the CronJob con
 
 ---
 
-### **Important Notes About CronJobs**
-
-- If a Job fails, CronJob can retry according to backoff policies.
-- You can control **concurrency policies**:
-  - `Allow` (default): multiple Jobs can run at the same time.
-  - `Forbid`: prevent a new Job from starting if a previous one is still running.
-  - `Replace`: delete the currently running Job before starting a new one.
-
-You can set this via:
-
-```yaml
-concurrencyPolicy: Forbid
-```
-
-- You can also set `startingDeadlineSeconds` to control how late a job can start.
-
----
 
 ## **Deployment vs DaemonSet vs Job vs CronJob**
 
