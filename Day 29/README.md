@@ -1,4 +1,4 @@
-# Day 29: Kubernetes DaemonSet, Jobs & Cronjobs  | CKA Course 2025
+# Day 29: Kubernetes DaemonSet, Job & CronJob Explained | Master Workloads | CKA Course 2025
 
 ## Video reference for Day 29 is the following:
 
@@ -511,9 +511,10 @@ metadata:
   name: hello-cronjob
 spec:
   schedule: "*/1 * * * *"  # Cron expression specifying the job to run every 1 minute
-  ttlSecondsAfterFinished: 60  # Automatically deletes the Pod 60 seconds after it completes
   jobTemplate:
     spec:
+      backoffLimit: 4 # Number of retries before marking the Job as failed
+      ttlSecondsAfterFinished: 60  # Automatically deletes the Pod 60 seconds after it completes
       completions: 2
         # Specifies that 2 successful Pod completions are required for the CronJob's Job to be considered complete.
         # Each Pod must complete successfully (exit with status 0) for the job to be marked as finished.
