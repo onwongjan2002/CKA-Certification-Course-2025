@@ -1,7 +1,8 @@
-# Day 29: Kubernetes DaemonSet, Job & CronJob Explained | Master Workloads | CKA Course 2025
+# Day 29: MASTER DaemonSet, Job & CronJob in Kubernetes  with Detailed Demos | CKA Course 2025
 
 ## Video reference for Day 29 is the following:
 
+[![Watch the video](https://img.youtube.com/vi/gKbIkyE0TTI/maxresdefault.jpg)](https://www.youtube.com/watch?v=gKbIkyE0TTI&ab_channel=CloudWithVarJosh)
 
 ---
 ## ⭐ Support the Project  
@@ -9,7 +10,24 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 
 ---
 
+## Table of Contents
+
+- [Understanding DaemonSets in Kubernetes](#understanding-daemonsets-in-kubernetes)
+  - [Demo: Deploying a Dummy Logging Agent DaemonSet](#demo-daemonset---deploying-a-dummy-logging-agent)
+- [Understanding Jobs and CronJobs in Kubernetes](#understanding-jobs-and-cronjobs-in-kubernetes)
+  - [What is a Job in Kubernetes?](#what-is-a-job-in-kubernetes)
+    - [Job Demo: Running a One-Time Task](#job-demo-running-a-one-time-task)
+  - [What is a CronJob in Kubernetes?](#what-is-a-cronjob-in-kubernetes)
+    - [Demo: CronJob - Running a Scheduled Task](#demo-cronjob---running-a-scheduled-task)
+
+- [Deployment vs DaemonSet vs Job vs CronJob](#deployment-vs-daemonset-vs-job-vs-cronjob)
+- [References](#references)
+
+---
+
 ## **Understanding DaemonSets in Kubernetes**
+
+![Alt text](/images/29a.png)
 
 A **DaemonSet** ensures that **exactly one Pod runs on each node** in the cluster.  
 As new nodes are added to the cluster, Kubernetes automatically **schedules a Pod** onto the new node.  
@@ -314,6 +332,8 @@ This is where **Jobs** and **CronJobs** come into the picture.
 
 ### **What is a Job in Kubernetes?**
 
+![Alt text](/images/29b.png)
+
 A **Job** is a Kubernetes resource that **creates one or more Pods** to **run a specific task to completion**.  
 Once the task finishes successfully (Pod status = `Completed`), the Job is considered **finished**.
 
@@ -433,6 +453,8 @@ kubectl describe job hello-job
 
 ## **What is a CronJob in Kubernetes?**
 
+![Alt text](/images/29c.png)
+
 A **CronJob** allows you to **schedule Jobs to run at specific times**, similar to how **Linux crontab** works.
 
 CronJobs are used for:
@@ -444,7 +466,27 @@ CronJobs are used for:
 
 A CronJob creates a **Job** according to the **cron schedule** you specify.
 
+A **CronJob** in Kubernetes is used to run tasks on a scheduled basis.  
+It **does not run Pods directly**. Instead, it acts like a **scheduler** — it defines *when* a **Job** should be created.  
+At each scheduled time, the **CronJob controller** automatically creates a new **Job** object, and that **Job** is responsible for running one or more **Pods** to complete the task.
+
+Once created, the Job behaves like any other Kubernetes Job — handling retries, `backoffLimit`, and managing success or failure.
+
+An important field you can configure inside the CronJob’s **Job template** is `ttlSecondsAfterFinished`.  
+This field controls the cleanup of Jobs **after** they are completed.  
+When a Job (created by the CronJob) finishes — either successfully or after failure — Kubernetes waits for the TTL value (for example, 60 seconds) and then automatically **deletes the Job object**.  
+Once the Job is deleted, its associated Pods are garbage collected later.
+
+This helps **keep your cluster clean**, especially if your CronJob is scheduled to run frequently, by preventing a buildup of completed Jobs and their Pods.
+
 ---
+**Quick Summary:**  
+- **CronJob** → Creates a **Job** at the scheduled time.  
+- **Job** → Runs the Pods and manages retries/failures.  
+- `ttlSecondsAfterFinished` → Deletes the Job after it finishes and cleans up associated Pods later.
+
+---
+
 
 ## **Understanding Cron Expression Fields**
 

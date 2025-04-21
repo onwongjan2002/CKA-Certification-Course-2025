@@ -6,7 +6,7 @@ spec:
   schedule: "*/1 * * * *"  # Every 1 minute
   jobTemplate:
     spec:
-      ttlSecondsAfterFinished: 60  # Automatically deletes the Pod 60 seconds after it completes
+      #ttlSecondsAfterFinished: 60
       completions: 2
       parallelism: 2
       backoffLimit: 4
@@ -16,4 +16,4 @@ spec:
             - name: hello
               image: busybox
               command: ["bin/sh", "-c", "echo Hello from CronJob! && sleep 10"]
-          restartPolicy: Never
+          restartPolicy: Never        
