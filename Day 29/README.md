@@ -19,7 +19,6 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
     - [Job Demo: Running a One-Time Task](#job-demo-running-a-one-time-task)
   - [What is a CronJob in Kubernetes?](#what-is-a-cronjob-in-kubernetes)
     - [Demo: CronJob - Running a Scheduled Task](#demo-cronjob---running-a-scheduled-task)
-
 - [Deployment vs DaemonSet vs Job vs CronJob](#deployment-vs-daemonset-vs-job-vs-cronjob)
 - [References](#references)
 
