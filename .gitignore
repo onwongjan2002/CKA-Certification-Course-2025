@@ -44,3 +44,7 @@ dist/
 
 # Ignore Kubernetes config files (optional, if not needed in version control)
 *.kube/
+
+*.key
+*.pem
+*.pub
