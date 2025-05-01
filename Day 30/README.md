@@ -1,4 +1,4 @@
-# Day 30: Encryption Fundamentals & TLS Demystified | CKA Course 2025
+# Day 30: How HTTPS & SSH Work | What is Encryption? | Symmetric & Asymmetric Encryption | CKA 2025
 
 ## Video reference for Day 30 is the following:
 
