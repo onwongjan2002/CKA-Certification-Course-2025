@@ -36,14 +36,13 @@ We need encryption to:
 - It is **fast, efficient**, and ideal for encrypting **large volumes of data**.
 - The downside is: if the key is compromised, both encryption and decryption are at risk.
 
----
+> In symmetric encryption, the key is commonly referred to as the **symmetric key**, **shared key**, or **secret key** — all indicating the same key is used for both encryption and decryption.
+
 
 **Examples of Symmetric Encryption Algorithms:**
 - **AES (Advanced Encryption Standard)** — the industry standard
 - **ChaCha20** — optimized for low-power devices and mobile environments
 - **Blowfish**, **Twofish**, and **DES** (older or legacy)
-
----
 
 **Common Use Cases:**
 
@@ -63,7 +62,6 @@ We need encryption to:
 - **Kubernetes Secrets encryption at rest**:
   - When encryption is configured in the kube-apiserver (e.g., using an AES-CBC or AES-GCM provider), Kubernetes encrypts Secrets, ConfigMaps, etc. using symmetric keys stored in a KMS or local file.
 
----
 
 **Why Symmetric Encryption Is Preferred for Bulk Data:**
 
@@ -81,15 +79,11 @@ We need encryption to:
 - It's commonly used for **secure key exchange**, **authentication**, and **digital signatures**.
 - While more **computationally expensive** than symmetric encryption, it's ideal for establishing trust and securely bootstrapping secure channels.
 
----
-
 **Examples of Asymmetric Encryption Algorithms:**
 - **Ed25519** — modern default for SSH keys and JWT signing in cloud-native systems
 - **RSA** — still widely supported; commonly used in TLS certs, Kubernetes components, and legacy SSH
 - **Elliptic Curve Cryptography (ECC)** — used in ECDSA; faster and more compact than RSA
 
-
----
 
 **Common Use Cases:**
 
@@ -113,15 +107,11 @@ We need encryption to:
   - Tools like **Vault by HashiCorp** and **Sealed Secrets** use asymmetric encryption to encrypt sensitive data (e.g., a Secret YAML file).
   - Only the controller inside the cluster can decrypt it using the corresponding private key.
 
----
-
 **Why Use Asymmetric Encryption?**
 
 - You can **safely distribute** public keys — there's no risk if someone intercepts them.
 - Ideal for use cases where two systems **don’t already share a secret**.
 - Enables strong **identity verification** and **trust models**, such as PKI (Public Key Infrastructure).
-
----
 
 **Key Considerations:**
 
@@ -154,7 +144,7 @@ On the other hand, **asymmetric encryption algorithms** like **RSA (Rivest-Shami
 
 When we talk about encryption in cloud and Kubernetes environments, it typically falls into **two categories**:
 
----
+
 
 ### 1. **Encryption In-Transit**
 
@@ -307,11 +297,11 @@ Here’s what happens when Seema opens `https://pinkbank.com`:
    When someone (like the owner of `pinkbank.com`) registers a domain, they request a certificate from a CA. The CA performs checks to verify that they indeed control the domain.  
    Once verified, the CA uses its **private key** to **sign the certificate** — this signature is essentially a cryptographic endorsement.
 
-   > **Link to Scenario 3**:  
-   Remember how in Scenario 3 (SSH login), Seema's system verified a **signed challenge** using a **private key**?  
-   Similarly here:  
-        - The CA uses its **private key to sign** the TLS certificate.
-        - The browser uses the CA’s **public key to verify** that signature.
+    > **🔁 Link to Scenario 3**:  
+      Remember in Scenario 3 (SSH login), **Seema's system used her private key to sign** a challenge sent by the server, and the **server verified it using the public key**.  
+      Similarly here, in TLS:  
+          - The **Certificate Authority (CA)** uses its **private key to sign** the TLS certificate.  
+          - The **browser uses the CA’s public key** to **verify** the certificate’s authenticity.
 
 3. **Browser verifies the certificate**
    - All browsers come with **a list of trusted CAs** and their **public keys**.
@@ -337,7 +327,7 @@ Here’s what happens when Seema opens `https://pinkbank.com`:
 
 ---
 
-### 🧠 Final Insight for Students:
+### Key Takeaways:
 
 - The **CA’s private key** signs the certificate → the **browser uses CA’s public key** to verify it.  
 - The **browser’s session key** is encrypted with the **server’s public key** → the **server’s private key** decrypts it.
