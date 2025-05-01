@@ -2,9 +2,31 @@
 
 ## Video reference for Day 30 is the following:
 
+[![Watch the video](https://img.youtube.com/vi/MkGPyJqCkB4/maxresdefault.jpg)](https://www.youtube.com/watch?v=MkGPyJqCkB4&ab_channel=CloudWithVarJosh)
+
 ---
 ## ⭐ Support the Project  
 If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
+
+# Table of Contents
+
+1.  [Introduction to Encryption](#introduction-to-encryption)
+2.  [What is Encryption? Why Do We Need It?](#what-is-encryption-why-do-we-need-it)
+3.  [Two Main Types of Encryption](#two-main-types-of-encryption)
+    * [1. Symmetric Encryption (Shared Key Encryption)](#1-symmetric-encryption-shared-key-encryption)
+    * [2. Asymmetric Encryption (Public Key Cryptography)](#2-asymmetric-encryption-public-key-cryptography)
+6.  [Encryption Approaches: In-Transit vs At-Rest](#encryption-approaches-in-transit-vs-at-rest)
+    * [1. Encryption In-Transit](#1-encryption-in-transit)
+    * [2. Encryption At-Rest](#2-encryption-at-rest)
+7.  [Quick Comparison:](#quick-comparison)
+8.  [Understanding Symmetric and Asymmetric Encryption Through Real-Life Scenarios](#understanding-symmetric-and-asymmetric-encryption-through-real-life-scenarios)
+    * [Scenario 1: Symmetric Encryption (Disk Encryption)](#scenario-1-symmetric-encryption-disk-encryption)
+    * [Scenario 2: Symmetric Encryption Alone Isn't Enough for Internet Communication](#scenario-2-symmetric-encryption-alone-isnt-enough-for-internet-communication)
+    * [Scenario 3: Asymmetric Encryption (SSH into EC2 Instance)](#scenario-3-asymmetric-encryption-ssh-into-ec2-instance)
+    * [Scenario 4: Combining Symmetric + Asymmetric (TLS Handshake)](#scenario-4-combining-symmetric--asymmetric-tls-handshake)
+9.  [Conclusion](#conclusion)
 
 ---
 
@@ -27,6 +49,7 @@ We need encryption to:
 
 ## Two Main Types of Encryption
 
+![Alt text](/images/30a.png)
 
 
 ### 1. Symmetric Encryption (Shared Key Encryption)
@@ -73,6 +96,8 @@ We need encryption to:
 
 
 ### 2. Asymmetric Encryption (Public Key Cryptography)
+
+![Alt text](/images/30a.png)
 
 - Uses a **key pair**: a **public key** (shared with everyone) and a **private key** (kept secret).
 - Data encrypted with the **public key** can only be decrypted with the **private key**, and vice versa.
@@ -144,7 +169,7 @@ On the other hand, **asymmetric encryption algorithms** like **RSA (Rivest-Shami
 
 When we talk about encryption in cloud and Kubernetes environments, it typically falls into **two categories**:
 
-
+![Alt text](/images/30b.png)
 
 ### 1. **Encryption In-Transit**
 
@@ -209,6 +234,8 @@ To make encryption concepts clear, let's walk through four practical scenarios i
 **Use Case:** Protecting Seema's Laptop Hard Disk  
 **Technology Example:** BitLocker (Windows)
 
+![Alt text](/images/30c.png)
+
 Seema has a Windows laptop with **BitLocker** enabled to encrypt her hard disk. BitLocker uses **symmetric encryption**, typically **AES (Advanced Encryption Standard)**.
 
 - When Seema turns on her laptop, she must enter a **BitLocker PIN**. This unlocks the encryption key and allows access to the disk.
@@ -222,6 +249,7 @@ Symmetric encryption is **fast** and ideal for **encrypting large amounts of dat
 ---
 
 ### **Scenario 2: Symmetric Encryption Alone Isn't Enough for Internet Communication**  
+![Alt text](/images/30d.png)
 **Use Case:** Seema wants to access `pinkbank.com` securely  
 **Challenge:** How to share a symmetric key securely?
 
@@ -238,6 +266,7 @@ We'll revisit this in **Scenario 4**, where we solve this using **asymmetric enc
 ---
 
 ### **Scenario 3: Asymmetric Encryption (SSH into EC2 Instance)**  
+![Alt text](/images/30e.png)
 **Use Case:** Secure login to Ubuntu EC2 instance on AWS  
 **Technology Example:** SSH, Ed25519 keys
 
@@ -285,6 +314,8 @@ Before we jump into Scenario 4, let’s understand **what TLS is and why it matt
 **TLS** is a **general-purpose protocol** used to secure various application-layer protocols like **HTTPS**, **FTPS**, **SMTPS**, **IMAPS/POP3S**, **LDAPs**, **gRPC**, **Kubernetes**, and **MQTT**. While **HTTPS** is the most common use of TLS, **TLS is not exclusive to HTTPS** and is used for secure communication in many other protocols. So, whenever you see **HTTPS**, you can be sure **TLS is working behind the scenes** to ensure **authentication**, **encryption**, and **integrity** of your communication.
 
 Let’s now see how Seema’s browser establishes a secure TLS session with her bank’s website.
+
+![Alt text](/images/30f.png)
 
 **Use Case:** Seema accesses `pinkbank.com` securely via browser  
 **Technology Example:** TLS (HTTPS), Digital Certificates, Certificate Authorities
@@ -345,5 +376,23 @@ Here’s what happens when Seema opens `https://pinkbank.com`:
 > 💡 **Why Let's Encrypt?**  
 We chose Let’s Encrypt as it's widely used for **personal websites, DevOps automation**, and **startup deployments**.  
 For enterprise or production environments, you'd often use **DigiCert**, **Sectigo**, or cloud-native CAs like **AWS Certificate Manager (ACM)**.
+
+---
+
+## Conclusion
+
+Encryption is vital in protecting sensitive information in today’s digital world. The use of **symmetric encryption** and **asymmetric encryption** ensures the security of data both at rest and in transit.
+
+- **Symmetric encryption** is fast and ideal for encrypting large amounts of data, such as storage encryption (e.g., disk encryption). However, it requires both parties to share the same key, which can lead to security concerns if not handled properly.
+  
+- **Asymmetric encryption**, on the other hand, allows for secure communication even without sharing a common secret. It is key in establishing trust, authentication, and securing key exchange processes. **Public key encryption** is commonly used in protocols like **TLS** for secure web communication and **SSH** for secure remote access, which are essential in today's cloud and DevOps ecosystems.
+
+- **TLS (Transport Layer Security)** encrypts data during transmission, ensuring that communication between a client and a server remains confidential and tamper-proof. This is critical for web applications, APIs, and cloud infrastructure.
+  
+- **SSH (Secure Shell)** uses asymmetric encryption for secure remote access to servers, like logging into an EC2 instance in AWS. It is vital for maintaining secure DevOps workflows and infrastructure management.
+
+In addition to securing communications, encryption **at-rest** (e.g., encrypting stored data) is just as crucial for protecting sensitive information that might be compromised if an attacker gains unauthorized access to a storage medium or database.
+
+Ultimately, understanding how encryption works in these different contexts—whether it's **symmetric encryption**, **asymmetric encryption**, **TLS**, or **SSH**—empowers individuals and organizations to maintain data security in an increasingly interconnected and digital world.
 
 ---
