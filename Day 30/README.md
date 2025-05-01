@@ -1,4 +1,4 @@
-# Day 30: MASTER DaemonSet, Job & CronJob in Kubernetes  with Detailed Demos | CKA Course 2025
+# Day 30: Encryption Fundamentals & TLS Demystified | CKA Course 2025
 
 ## Video reference for Day 30 is the following:
 
