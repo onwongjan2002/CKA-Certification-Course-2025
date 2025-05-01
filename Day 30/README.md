@@ -332,9 +332,9 @@ Here’s what happens when Seema opens `https://pinkbank.com`:
    - A **digital signature from a Certificate Authority (CA)** like Let’s Encrypt
 
    > **Why a CA is needed**  
-   A **Certificate Authority (CA)** is a trusted organization that validates domain ownership and issues digital certificates.  
-   When someone (like the owner of `pinkbank.com`) registers a domain, they request a certificate from a CA. The CA performs checks to verify that they indeed control the domain.  
-   Once verified, the CA uses its **private key** to **sign the certificate** — this signature is essentially a cryptographic endorsement.
+      A **Certificate Authority (CA)** is a trusted organization responsible for validating the ownership of domains and signing digital certificates.  
+      When a domain owner (for example, the owner of `pinkbank.com`) registers their domain, they request a certificate from the CA. The CA performs a series of checks to ensure that the requester indeed controls the domain.  
+      Once the verification is complete, the CA uses its **private key** to **sign the certificate**, creating a cryptographic endorsement of the domain's authenticity. This signature assures users that the domain is legitimate and that communication with it is secure.
 
     > **🔁 Link to Scenario 3**:  
       Remember in Scenario 3 (SSH login), **Seema's system used her private key to sign** a challenge sent by the server, and the **server verified it using the public key**.  
