@@ -263,6 +263,12 @@ Seema wants to securely SSH into her Ubuntu EC2 instance. She uses **asymmetric 
 **Key Point:**  
 Asymmetric encryption is used for **identity verification and secure key exchange**. The **private key stays with the user**, and is **never transmitted**.
 
+Here are some common extensions used for **public** and **private keys**:
+- **Public Key Files**: `.pub`, `.crt`, `.cer`, `.pem`, `.der`
+- **Private Key Files**: `.key`, `.pem`, `.ppk`, `.pfx`, `.der`
+
+The most commonly used extensions for **SSH keys** are `.pub` for public keys and `.key` for private keys. For certificates in the SSL/TLS world, `.crt` and `.pem` are frequently used.
+
 ---
 
 ### **Scenario 4: Combining Symmetric + Asymmetric (TLS Handshake)** 
@@ -275,6 +281,8 @@ Before we jump into Scenario 4, let’s understand **what TLS is and why it matt
 - It prevents attackers from **eavesdropping, tampering, or impersonating** the website you’re connecting to.
 - TLS uses a combination of **asymmetric encryption** (for secure key exchange) and **symmetric encryption** (for fast and efficient data transfer).
 - You’ve likely used TLS today — every time you saw a **lock icon in your browser**, TLS was working behind the scenes.
+
+**TLS** is a **general-purpose protocol** used to secure various application-layer protocols like **HTTPS**, **FTPS**, **SMTPS**, **IMAPS/POP3S**, **LDAPs**, **gRPC**, **Kubernetes**, and **MQTT**. While **HTTPS** is the most common use of TLS, **TLS is not exclusive to HTTPS** and is used for secure communication in many other protocols. So, whenever you see **HTTPS**, you can be sure **TLS is working behind the scenes** to ensure **authentication**, **encryption**, and **integrity** of your communication.
 
 Let’s now see how Seema’s browser establishes a secure TLS session with her bank’s website.
 
