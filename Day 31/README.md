@@ -117,10 +117,27 @@ SSH supports **mutual authentication**, where:
 * The server presents a **digital certificate** (issued and signed by a **trusted Certificate Authority**) to the client.
 * This certificate includes the server’s **public key** and a **CA signature**.
 * The client verifies:
-
   * That the certificate is **issued by a trusted CA** (whose root cert is pre-installed).
   * That the certificate matches the **domain name** (e.g., `example.com`).
 * Optionally, in **mutual TLS**, the client also presents a certificate for authentication.
+
+---
+
+### Order of Authentication in Mutual Authentication (SSH or mTLS)
+
+Whether using **SSH** or **mutual TLS (mTLS)**, the **server always authenticates first**, followed by the client.
+
+**Reasons the server authenticates first:**
+
+* The client must verify the server's identity before sending any sensitive data.
+* It prevents man-in-the-middle (MITM) attacks by ensuring the connection is to the intended endpoint.
+* A secure, encrypted channel is established only after the server is trusted.
+* This pattern ensures that secrets (like private keys or credentials) are never exposed to an untrusted server.
+
+This sequence holds true for:
+
+* SSH (server presents host key first, then client authentication occurs)
+* mTLS (server presents its certificate first, then requests the client's certificate if required)
 
 ---
 
@@ -153,7 +170,7 @@ Two essential tools for handling public-private key pairs in these domains are *
 
 ---
 
-### **1️⃣ Secure Remote Access: `ssh-keygen` (SSH Authentication)**  
+### **1. Secure Remote Access: `ssh-keygen` (SSH Authentication)**  
 
 `ssh-keygen` is the primary tool for generating SSH **public/private key pairs**, which enable **secure remote login** without passwords.  
 
@@ -169,7 +186,7 @@ Two essential tools for handling public-private key pairs in these domains are *
 ---
 
 
-### **2️⃣ Secure Web Communication: `openssl` (TLS Certificates & Identity Validation)**  
+### **2. Secure Web Communication: `openssl` (TLS Certificates & Identity Validation)**  
 
 `openssl` is widely used for **private key generation** and **certificate management**, conforming to the **X.509 standard** for TLS encryption.  
 
@@ -331,10 +348,6 @@ This concept applies similarly. You can configure Kubernetes components to trust
 
 ---
 
-Your section is already well-structured, clear, and technically accurate. The sequencing flows logically from concept to implementation across different Kubernetes setups. Here's an **enhanced version** with slight refinements for clarity, readability, and flow—while retaining all the technical details and tone:
-
----
-
 ### **Private CAs in Kubernetes Clusters**
 
 In Kubernetes, secure communication between components is achieved using **TLS certificates**—and these are typically signed by a **private Certificate Authority (CA)**.
@@ -374,53 +387,6 @@ In short:
 * **Private CAs** → Used for internal Kubernetes communication
 * **Public CAs** → Used for securing external-facing applications
 * ⚠️ Public CAs are **not** used for control plane or internal Kubernetes components
----
-
-### ssh-keygen vs openssl
-
-In [Day 30](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2030), we learned about ssh-keygen, but today I want to introduce OpenSSL:
-
-* `ssh-keygen`: Generates public/private key pairs for **SSH authentication**. These are typically used for logging into remote systems.
-* `openssl`: Used for **TLS/SSL certificates**, which follow the **X.509 standard**. In TLS:
-
-  * The term "certificate" refers to a public key wrapped in metadata (issuer, subject, validity period) and **digitally signed** by a CA.
-  * The private key is kept secure on the server or client side.
-
-**Popular File Extensions:**
-
-| Format         | Description                                              |
-| -------------- | -------------------------------------------------------- |
-| `.crt`, `.pem` | Certificate (public key)                                 |
-| `.key`, `*-key.pem`         | Private key                                              |
-| `.csr`         | Certificate Signing Request (used to get signed by a CA) |
-
----
-### **Understanding TLS Certificates and Their Role in Asymmetric Encryption**
-
-TLS certificates are often referred to interchangeably with **public keys**, but it's important to understand the distinction.
-
-A **TLS certificate** contains more than just the public key—it also includes metadata such as:
-
-* The **public key** itself
-* **Certificate issuer details** (the CA that signed it)
-* **Validity period** (issuance and expiry dates)
-* **Subject information** (who the certificate is issued to)
-* And sometimes, additional fields like SAN (Subject Alternative Names)
-
-As we saw in **Day 30**, this metadata helps verify the identity of the certificate holder and ensure the certificate is valid and trusted.
-
-Think of it like this:
-
-* In **SSH**, you deal with a **public key and private key**.
-* In **TLS**, you deal with a **certificate (which holds the public key)** and a **private key**.
-
-Regardless of the application-layer protocol using TLS—like **HTTPS**, **FTPS**, **SMTP with STARTTLS**, or **POP3S**—the underlying mechanism is based on **asymmetric encryption**, where:
-
-* The **certificate (public key)** is used to encrypt data or verify signatures,
-* And the **private key** is used to decrypt data or sign it.
-
-Ultimately, both SSH and TLS rely on **Public Key Infrastructure (PKI)** and **asymmetric cryptography**, just in different forms and contexts.
-
 ---
 
 ### Client and Server – A Refresher
