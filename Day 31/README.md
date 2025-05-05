@@ -37,15 +37,202 @@ By the end of this session, you will have a clear understanding of how TLS and *
 
 ---
 
+
+### **Public Key Cryptography**
+
+#### **What Public Key Cryptography (PKC) Provides**
+
+Public Key Cryptography (PKC) underpins secure communication by enabling:
+- Authentication (Identity Verification)
+- Secure Key Exchange (Foundation for Encryption)
+
+We will now discuss both of these in details.
+
+### 1. **Authentication (Identity Verification):**
+
+Public Key Cryptography enables entities—**users, servers, or systems**—to prove their identity using **key pairs** and **digital signatures**. This is fundamental to ensuring that communication is happening with a legitimate party.
+
+#### **In SSH:**
+
+SSH supports **mutual authentication**, where:
+
+* **Server Authentication (Host Key):**
+
+  * When an SSH server (e.g., a Linux machine) is installed, it automatically generates a **host key pair** for each supported algorithm (like RSA, ECDSA, ED25519), stored at:
+
+    * **Private Key:** `/etc/ssh/ssh_host_<algo>_key`
+    * **Public Key:** `/etc/ssh/ssh_host_<algo>_key.pub`
+
+  * These keys are used to **prove the identity of the server** to any connecting SSH client.
+
+  * When a client connects:
+
+    * The server sends its **host public key**.
+
+    * The SSH client checks whether this key is already present in its **`~/.ssh/known_hosts`** file.
+
+  * If it's the **first connection**, the key won't exist in `known_hosts`, and the client will show a prompt:
+
+    ```
+    The authenticity of host 'server.com (192.168.1.10)' can't be established.
+    ED25519 key fingerprint is SHA256:abc123...
+    Are you sure you want to continue connecting (yes/no)?
+    ```
+
+    You can manually verify the fingerprint by running the following command **on the server** to print the fingerprint of its public host key:
+
+    ```
+    ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
+    ```
+
+    * `-l` (lowercase L): shows the fingerprint of the key.
+    * `-f`: specifies the path to the public key file.
+
+    Replace `ssh_host_ed25519_key.pub` with the appropriate public key file (e.g., for RSA: `ssh_host_rsa_key.pub`) if using a different algorithm.
+
+
+    * If the user accepts (`yes`), the server's host key is **saved in `~/.ssh/known_hosts`** and used for verification in all future connections.
+
+    * This approach is called **TOFU (Trust On First Use)**—you trust the server the first time, and ensure its identity doesn't change later.
+
+  * On subsequent connections:
+
+    * If the server's host key has changed (possibly due to a reinstallation or a **man-in-the-middle attack**), SSH will warn the user and may block the connection unless the mismatch is explicitly resolved.
+
+    * This warning may also appear in **cloud environments** where the server’s **ephemeral public IP** changes — even if the host key is the same — because SSH uses the IP/hostname to identify the server.
+
+* **Client Authentication:**
+
+  After the server proves its identity and a **shared session key is securely established via key exchange** (enabling encrypted communication), the **client must prove its identity** to the server using one of the permitted authentication methods.
+
+  In secure environments, this is typically done using **SSH key-based authentication**:
+
+  * The **server sends a challenge**, and the **client must sign it using its private key** (e.g., `~/.ssh/mykey`) to prove it possesses the corresponding private key.
+  * The **server verifies the signature** using the **client’s public key**, which must be present in the server’s `~/.ssh/authorized_keys` file.
+
+  If **key-based authentication** is not configured or fails, the server may fall back to **password authentication** or other mechanisms, depending on its SSH configuration.
+
+#### **In TLS (e.g., HTTPS):**
+
+* The server presents a **digital certificate** (issued and signed by a **trusted Certificate Authority**) to the client.
+* This certificate includes the server’s **public key** and a **CA signature**.
+* The client verifies:
+
+  * That the certificate is **issued by a trusted CA** (whose root cert is pre-installed).
+  * That the certificate matches the **domain name** (e.g., `example.com`).
+* Optionally, in **mutual TLS**, the client also presents a certificate for authentication.
+
+---
+
+### 2. **Secure Key Exchange (Foundation for Encryption):**
+
+Rather than encrypting all data directly using asymmetric cryptography, **Public Key Cryptography (PKC)** is used to **securely exchange or derive symmetric session keys**. These **session keys** are then used for efficient **symmetric encryption** of actual data in transit.
+
+* In **TLS**:
+
+  * The **client generates a pre-master secret**, encrypts it using the **server’s public key** (from its certificate), and sends it to the server.
+  * Both sides then derive the **session key** using this pre-master secret and agreed-upon algorithms.
+
+* In **SSH**:
+
+  * Both the **client and server participate equally** in a **key exchange algorithm** (e.g., **Diffie-Hellman** or **ECDH**).
+  * Each side contributes a random component and uses the other’s public part to **jointly compute the same session key**.
+  * **No single party creates the session key outright**; it is derived **collaboratively**, ensuring that **neither side sends the session key directly** — making it secure even over untrusted networks.
+
+Once the session key is established, it is used for **symmetric encryption** (e.g., AES) and **MACs** to protect the confidentiality and integrity of all subsequent communication.
+
+
+---
+
+
+#### **Public Key Cryptography in DevOps: Focus on SSH & HTTPS**  
+
+Public Key Cryptography (PKC) underpins authentication and secure communication across multiple **application-layer protocols**. While it's used in **email security (PGP, S/MIME), VoIP, database connections, and secure messaging**, a **DevOps engineer primarily interacts with SSH and HTTPS** for managing infrastructure.
+
+Two essential tools for handling public-private key pairs in these domains are **ssh-keygen** (for SSH authentication) and **openssl** (for TLS certificates).
+
+---
+
+### **1️⃣ Secure Remote Access: `ssh-keygen` (SSH Authentication)**  
+
+`ssh-keygen` is the primary tool for generating SSH **public/private key pairs**, which enable **secure remote login** without passwords.  
+
+- Used for **server administration, Git authentication, CI/CD pipelines, and automation**.  
+- The **private key** is kept on the **client**, while the **public key** is stored on the **server** (`~/.ssh/authorized_keys`).  
+- Authentication works via **public key cryptography**, where the server **verifies the client’s signed request** using its **stored public key**.  
+
+#### **Alternative SSH Key Tools:**  
+- **PuTTYgen** → Windows-based tool for generating SSH keys (used with PuTTY).  
+- **OpenSSH** → Built-in on most Unix-based systems, provides SSH utilities including key management.  
+- **Mosh (Mobile Shell)** → Used for remote connections and can leverage SSH key authentication.  
+
+---
+
+
+### **2️⃣ Secure Web Communication: `openssl` (TLS Certificates & Identity Validation)**  
+
+`openssl` is widely used for **private key generation** and **certificate management**, conforming to the **X.509 standard** for TLS encryption.  
+
+- Generates a **private key**, which is securely stored on the server.  
+- Creates a **certificate**, which contains a **public key**, metadata (issuer, validity), and a **digital signature from a Certificate Authority (CA)**.  
+- The **private key** is used to establish secure communication, while the certificate allows clients to verify the server’s identity.  
+
+> **Note:** TLS is not exclusive to HTTPS. Other application-layer protocols, such as **SMTP** (for email), **FTPS** (for secure file transfer), and **IMAPS** (for secure email retrieval), also use TLS for authentication and secure communication.
+
+
+#### **Alternative TLS Certificate Tools:**
+
+* **Let's Encrypt** → Automated, free certificate authority for HTTPS encryption.
+* **CFSSL (Cloudflare’s PKI Toolkit)** → A powerful utility for creating and managing TLS certificates.
+* **Microsoft Certificate Store** → Native Windows certificate store used for system-wide certificate management.
+* **HashiCorp Vault** → Secure secret management and certificate handling for cloud and enterprise environments.
+* **Certbot** → Popular automation tool for provisioning Let's Encrypt SSL certificates.
+
+---
+
+### **Key Management Best Practices**  
+
+To protect private keys from unauthorized access, consider these secure storage options:  
+
+- **Hardware Security Modules (HSMs)** → Dedicated devices for key protection.  
+- **Secure Enclaves (TPM, Apple Secure Enclave)** → Isolated hardware environments restricting key access.  
+- **Cloud-based KMS (AWS KMS, Azure Key Vault)** → Encrypted storage with controlled access.  
+- **Encrypted Key Files (`.pem`, `.pfx`)** → Secured with strong passwords.  
+- **Smart Cards & USB Tokens (YubiKey, Nitrokey)** → Portable hardware-based security.  
+- **Air-Gapped Systems** → Completely offline key storage to prevent network attacks.  
+
+Regular **key rotation** and **audits** are crucial to maintaining security and replacing compromised keys efficiently. 
+
+### **Common Key File Formats**
+
+#### **For SSH Authentication**
+
+| Format                                | Description                                         |
+| ------------------------------------- | --------------------------------------------------- |
+| `.pub`                                | **Public key** (shared with the remote server)      |
+| `.key`, `*-key.pem`, **no extension** | **Private key** (must be kept secure on the client) |
+
+
+
+
+#### **For TLS Certificates**
+
+| Format              | Description                                                     |
+| ------------------- | --------------------------------------------------------------- |
+| `.crt`, `.pem`      | **Certificate** (contains a public key and metadata)            |
+| `.key`, `*-key.pem`, **no extension**  | **Private key** (must be securely stored)                       |
+| `.csr`              | **Certificate Signing Request** (used to request a signed cert) |
+
+By properly managing key storage and implementing best practices, organizations can significantly reduce security risks and prevent unauthorized access.
+
+---
+
 ### Types of TLS Certificate Authorities (CA): Public, Private, and Self-Signed
 
-And here’s a short paragraph you can use to kick off the section:
-
-> When enabling HTTPS or TLS for applications, certificates must be signed to be trusted by clients. There are three common ways to achieve this:
->
-> 1. **Public CA** – Used for production websites accessible over the internet (e.g., Let's Encrypt, DigiCert).
-> 2. **Private CA** – Used within organizations for internal services (e.g., `*.internal` domains).
-> 3. **Self-Signed Certificates** – Quick to create, mainly used for testing, but not trusted by browsers.
+When enabling HTTPS or TLS for applications, certificates must be signed to be trusted by clients. There are three common ways to achieve this:
+1. **Public CA** – Used for production websites accessible over the internet (e.g., Let's Encrypt, DigiCert).
+2. **Private CA** – Used within organizations for internal services (e.g., `*.internal` domains).
+3. **Self-Signed Certificates** – Quick to create, mainly used for testing, but not trusted by browsers.
 
 **Public CA vs Private CA vs Self-Signed Certificates**
 
