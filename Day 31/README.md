@@ -37,8 +37,103 @@ By the end of this session, you will have a clear understanding of how TLS and *
 
 ---
 
+### Client and Server – A Refresher
 
-### **Public Key Cryptography**
+A **client** is the one that initiates a request; the **server** is the one that responds.
+
+**General Examples:**
+* When **Seema** accesses `pinkbank.com`, **Seema** is the **client**, and **pinkbank.com** is the **server**.
+* When **Varun** downloads something from his **S3 bucket**, **Varun** is the **client**, and the **S3 bucket** is the **server**.
+
+**Kubernetes Examples:**
+* When you use `kubectl get pods`, `kubectl` is the **client** and the **API server** is the **server**.
+* When the API server talks to `etcd`, the API server is now the **client**, and `etcd` is the **server**.
+
+This direction of communication is critical when we later talk about **client certificates** and **mTLS**.
+
+---
+## **Public Key Cryptography**
+
+### **Public Key Cryptography in DevOps: Focus on SSH & HTTPS**  
+
+Public Key Cryptography (PKC) underpins authentication and secure communication across multiple **application-layer protocols**. While it's used in **email security (PGP, S/MIME), VoIP, database connections, and secure messaging**, a **DevOps engineer primarily interacts with SSH and HTTPS** for managing infrastructure.
+
+Two essential tools for handling public-private key pairs in these domains are **ssh-keygen** (for SSH authentication) and **openssl** (for TLS certificates).
+
+---
+
+#### **1. Secure Remote Access: `ssh-keygen` (SSH Authentication)**  
+
+`ssh-keygen` is the primary tool for generating SSH **public/private key pairs**, which enable **secure remote login** without passwords.  
+
+- Used for **server administration, Git authentication, CI/CD pipelines, and automation**.  
+- The **private key** is kept on the **client**, while the **public key** is stored on the **server** (`~/.ssh/authorized_keys`).  
+- Authentication works via **public key cryptography**, where the server **verifies the client’s signed request** using its **stored public key**.  
+
+**Alternative SSH Key Tools:**  
+- **PuTTYgen** → Windows-based tool for generating SSH keys (used with PuTTY).  
+- **OpenSSH** → Built-in on most Unix-based systems, provides SSH utilities including key management.  
+- **Mosh (Mobile Shell)** → Used for remote connections and can leverage SSH key authentication.  
+
+---
+
+
+#### **2. Secure Web Communication: `openssl` (TLS Certificates & Identity Validation)**  
+
+`openssl` is widely used for **private key generation** and **certificate management**, conforming to the **X.509 standard** for TLS encryption.  
+
+- Generates a **private key**, which is securely stored on the server.  
+- Creates a **certificate**, which contains a **public key**, metadata (issuer, validity), and a **digital signature from a Certificate Authority (CA)**.  
+- The **private key** is used to establish secure communication, while the certificate allows clients to verify the server’s identity.  
+
+> **Note:** TLS is not exclusive to HTTPS. Other application-layer protocols, such as **SMTP** (for email), **FTPS** (for secure file transfer), and **IMAPS** (for secure email retrieval), also use TLS for authentication and secure communication.
+
+**Alternative TLS Certificate Tools:**
+
+* **Let's Encrypt** → Automated, free certificate authority for HTTPS encryption.
+* **CFSSL (Cloudflare’s PKI Toolkit)** → A powerful utility for creating and managing TLS certificates.
+* **Microsoft Certificate Store** → Native Windows certificate store used for system-wide certificate management.
+* **HashiCorp Vault** → Secure secret management and certificate handling for cloud and enterprise environments.
+* **Certbot** → Popular automation tool for provisioning Let's Encrypt SSL certificates.
+
+---
+
+#### **Key Management Best Practices**  
+
+To protect private keys from unauthorized access, consider these secure storage options:  
+
+- **Hardware Security Modules (HSMs)** → Dedicated devices for key protection.  
+- **Secure Enclaves (TPM, Apple Secure Enclave)** → Isolated hardware environments restricting key access.  
+- **Cloud-based KMS (AWS KMS, Azure Key Vault)** → Encrypted storage with controlled access.  
+- **Encrypted Key Files (`.pem`, `.pfx`)** → Secured with strong passwords.  
+- **Smart Cards & USB Tokens (YubiKey, Nitrokey)** → Portable hardware-based security.  
+- **Air-Gapped Systems** → Completely offline key storage to prevent network attacks.  
+
+Regular **key rotation** and **audits** are crucial to maintaining security and replacing compromised keys efficiently. 
+
+#### **Common Key File Formats**
+
+#### **For SSH Authentication**
+
+| Format                                | Description                                         |
+| ------------------------------------- | --------------------------------------------------- |
+| `.pub`                                | **Public key** (shared with the remote server)      |
+| `.key`, `*-key.pem`, **no extension** | **Private key** (must be kept secure on the client) |
+
+
+
+
+#### **For TLS Certificates**
+
+| Format              | Description                                                     |
+| ------------------- | --------------------------------------------------------------- |
+| `.crt`, `.pem`      | **Certificate** (contains a public key and metadata)            |
+| `.key`, `*-key.pem`, **no extension**  | **Private key** (must be securely stored)                       |
+| `.csr`              | **Certificate Signing Request** (used to request a signed cert) |
+
+By properly managing key storage and implementing best practices, organizations can significantly reduce security risks and prevent unauthorized access.
+
+---
 
 #### **What Public Key Cryptography (PKC) Provides**
 
@@ -145,102 +240,20 @@ This sequence holds true for:
 
 Rather than encrypting all data directly using asymmetric cryptography, **Public Key Cryptography (PKC)** is used to **securely exchange or derive symmetric session keys**. These **session keys** are then used for efficient **symmetric encryption** of actual data in transit.
 
-* In **TLS**:
-
-  * The **client generates a pre-master secret**, encrypts it using the **server’s public key** (from its certificate), and sends it to the server.
-  * Both sides then derive the **session key** using this pre-master secret and agreed-upon algorithms.
-
 * In **SSH**:
 
   * Both the **client and server participate equally** in a **key exchange algorithm** (e.g., **Diffie-Hellman** or **ECDH**).
   * Each side contributes a random component and uses the other’s public part to **jointly compute the same session key**.
   * **No single party creates the session key outright**; it is derived **collaboratively**, ensuring that **neither side sends the session key directly** — making it secure even over untrusted networks.
+  * >🔐 **Importantly, this session key is established and encryption begins *before* any client authentication takes place.**
+    This ensures that even authentication credentials (like passwords or signed challenges) are never sent in plaintext.
+
+* In **TLS**:
+
+  * The **client generates a pre-master secret**, encrypts it using the **server’s public key** (from its certificate), and sends it to the server.
+  * Both sides then derive the **session key** using this pre-master secret and agreed-upon algorithms.
 
 Once the session key is established, it is used for **symmetric encryption** (e.g., AES) and **MACs** to protect the confidentiality and integrity of all subsequent communication.
-
-
----
-
-
-#### **Public Key Cryptography in DevOps: Focus on SSH & HTTPS**  
-
-Public Key Cryptography (PKC) underpins authentication and secure communication across multiple **application-layer protocols**. While it's used in **email security (PGP, S/MIME), VoIP, database connections, and secure messaging**, a **DevOps engineer primarily interacts with SSH and HTTPS** for managing infrastructure.
-
-Two essential tools for handling public-private key pairs in these domains are **ssh-keygen** (for SSH authentication) and **openssl** (for TLS certificates).
-
----
-
-### **1. Secure Remote Access: `ssh-keygen` (SSH Authentication)**  
-
-`ssh-keygen` is the primary tool for generating SSH **public/private key pairs**, which enable **secure remote login** without passwords.  
-
-- Used for **server administration, Git authentication, CI/CD pipelines, and automation**.  
-- The **private key** is kept on the **client**, while the **public key** is stored on the **server** (`~/.ssh/authorized_keys`).  
-- Authentication works via **public key cryptography**, where the server **verifies the client’s signed request** using its **stored public key**.  
-
-#### **Alternative SSH Key Tools:**  
-- **PuTTYgen** → Windows-based tool for generating SSH keys (used with PuTTY).  
-- **OpenSSH** → Built-in on most Unix-based systems, provides SSH utilities including key management.  
-- **Mosh (Mobile Shell)** → Used for remote connections and can leverage SSH key authentication.  
-
----
-
-
-### **2. Secure Web Communication: `openssl` (TLS Certificates & Identity Validation)**  
-
-`openssl` is widely used for **private key generation** and **certificate management**, conforming to the **X.509 standard** for TLS encryption.  
-
-- Generates a **private key**, which is securely stored on the server.  
-- Creates a **certificate**, which contains a **public key**, metadata (issuer, validity), and a **digital signature from a Certificate Authority (CA)**.  
-- The **private key** is used to establish secure communication, while the certificate allows clients to verify the server’s identity.  
-
-> **Note:** TLS is not exclusive to HTTPS. Other application-layer protocols, such as **SMTP** (for email), **FTPS** (for secure file transfer), and **IMAPS** (for secure email retrieval), also use TLS for authentication and secure communication.
-
-
-#### **Alternative TLS Certificate Tools:**
-
-* **Let's Encrypt** → Automated, free certificate authority for HTTPS encryption.
-* **CFSSL (Cloudflare’s PKI Toolkit)** → A powerful utility for creating and managing TLS certificates.
-* **Microsoft Certificate Store** → Native Windows certificate store used for system-wide certificate management.
-* **HashiCorp Vault** → Secure secret management and certificate handling for cloud and enterprise environments.
-* **Certbot** → Popular automation tool for provisioning Let's Encrypt SSL certificates.
-
----
-
-### **Key Management Best Practices**  
-
-To protect private keys from unauthorized access, consider these secure storage options:  
-
-- **Hardware Security Modules (HSMs)** → Dedicated devices for key protection.  
-- **Secure Enclaves (TPM, Apple Secure Enclave)** → Isolated hardware environments restricting key access.  
-- **Cloud-based KMS (AWS KMS, Azure Key Vault)** → Encrypted storage with controlled access.  
-- **Encrypted Key Files (`.pem`, `.pfx`)** → Secured with strong passwords.  
-- **Smart Cards & USB Tokens (YubiKey, Nitrokey)** → Portable hardware-based security.  
-- **Air-Gapped Systems** → Completely offline key storage to prevent network attacks.  
-
-Regular **key rotation** and **audits** are crucial to maintaining security and replacing compromised keys efficiently. 
-
-### **Common Key File Formats**
-
-#### **For SSH Authentication**
-
-| Format                                | Description                                         |
-| ------------------------------------- | --------------------------------------------------- |
-| `.pub`                                | **Public key** (shared with the remote server)      |
-| `.key`, `*-key.pem`, **no extension** | **Private key** (must be kept secure on the client) |
-
-
-
-
-#### **For TLS Certificates**
-
-| Format              | Description                                                     |
-| ------------------- | --------------------------------------------------------------- |
-| `.crt`, `.pem`      | **Certificate** (contains a public key and metadata)            |
-| `.key`, `*-key.pem`, **no extension**  | **Private key** (must be securely stored)                       |
-| `.csr`              | **Certificate Signing Request** (used to request a signed cert) |
-
-By properly managing key storage and implementing best practices, organizations can significantly reduce security risks and prevent unauthorized access.
 
 ---
 
@@ -387,23 +400,6 @@ In short:
 * **Private CAs** → Used for internal Kubernetes communication
 * **Public CAs** → Used for securing external-facing applications
 * ⚠️ Public CAs are **not** used for control plane or internal Kubernetes components
----
-
-### Client and Server – A Refresher
-
-A **client** is the one that initiates a request; the **server** is the one that responds.
-
-**General Examples:**
-* When **Seema** accesses `pinkbank.com`, **Seema** is the **client**, and **pinkbank.com** is the **server**.
-* When **Varun** downloads something from his **S3 bucket**, **Varun** is the **client**, and the **S3 bucket** is the **server**.
-
-**Kubernetes Examples:**
-* When you use `kubectl get pods`, `kubectl` is the **client** and the **API server** is the **server**.
-* When the API server talks to `etcd`, the API server is now the **client**, and `etcd` is the **server**.
-
-This direction of communication is critical when we later talk about **client certificates** and **mTLS**.
-
-
 ---
 
 ### Kubernetes Components as Clients and Servers
