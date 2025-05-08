@@ -370,13 +370,261 @@ Using these reserved domains helps avoid accidental DNS resolution on the public
 
 ---
 
+## Kubeconfig and Kubernetes Context
 
-#### In Kubernetes:
+### What is a Kubeconfig File and Why Do We Need It?
 
-This concept applies similarly. You can configure Kubernetes components to trust a **custom CA** by distributing that CA's public certificate to each component's trust store. For example:
+* The **kubeconfig file** is a configuration file that stores:
 
-* `kubectl` trusts the API server because it has the CA certificate used to sign the API server's certificate.
-* Similarly, components like `controller-manager`, `scheduler`, and `kubelet` trust the API server or each other through pre-shared CA certificates.
+  * **Cluster connection information** (e.g., API server URL)
+  * **User credentials** (e.g., authentication tokens, certificates)
+  * **Context information** (e.g., which cluster and user to use)
+* It allows Kubernetes tools (like `kubectl`) to interact with the cluster securely and seamlessly.
+* The kubeconfig file simplifies authentication and access control, eliminating the need to manually provide connection details each time we run a command.
+
+### What If the Kubeconfig File Were Not There?
+
+Without the kubeconfig file, you would need to manually specify the cluster connection information for every command. For example:
+
+* With the kubeconfig file:
+
+  ```bash
+  kubectl get pods
+  ```
+
+* Without the kubeconfig file, you would need to include details like this:
+
+  ```bash
+  kubectl get pods \
+    --server=https://<API_SERVER_URL> \
+    --certificate-authority=<CA_CERT_FILE> \
+    --client-key=<CLIENT_KEY_FILE> \
+    --client-certificate=<CLIENT_CERT_FILE>
+  ```
+
+As you can see, without the kubeconfig file, the command becomes longer and more error-prone. Each command requires explicit details, which can be tedious to manage.
+
+**We will look into how a kubeconfile looks like in a while.**
+
+---
+
+### Kubernetes Context
+**Kubernetes contexts** allow users to easily manage multiple clusters and namespaces by storing cluster, user, and namespace information in the `kubeconfig` file. Each context defines a combination of a cluster, a user, and a namespace, making it simple for users like `Seema` to switch between clusters and namespaces seamlessly without manually changing the configuration each time.
+
+## Scenario:
+
+Seema, the user, wants to access three different Kubernetes clusters from her laptop. Let's assume these clusters are:
+
+1. **dev-cluster** (for development)
+2. **staging-cluster** (for staging)
+3. **prod-cluster** (for production)
+
+Seema will need to interact with these clusters frequently. Using Kubernetes contexts, she can set up and switch between these clusters easily.
+
+## How Kubernetes Contexts Work:
+
+### 1. Configuring Contexts:
+
+In the `kubeconfig` file, each cluster, user, and namespace combination is stored as a context. So, Seema can have three different contexts, one for each cluster. The contexts will contain:
+
+* **Cluster details**: API server URL, certificate authority, etc.
+* **User details**: Authentication method (e.g., username/password, token, certificate).
+* **Namespace details**: The default namespace to work in for the context (though the namespace can be overridden on a per-command basis).
+
+### 2. Switching Between Contexts:
+
+With Kubernetes contexts configured, Seema can easily switch between them. If she needs to work on **dev-cluster**, she can switch to the `dev-context`. Similarly, for **staging-cluster**, she switches to `staging-context`, and for **prod-cluster**, the `prod-context`.
+
+A **Kubernetes namespace** is a virtual cluster within a physical cluster that provides logical segregation for resources. This allows multiple environments like dev, staging, and prod to coexist on the same cluster without interference.
+
+We now use naming like `app1-dev-ns`, `app1-staging-ns`, and `app1-prod-ns` to logically group and isolate resources of `app1` across environments.
+
+For example, `app1-dev-ns` in dev-cluster keeps all resources related to `app1`'s development isolated from production resources in `app1-prod-ns` on prod-cluster.
+
+## Example `kubeconfig` File:
+
+> 🗂️ **Note:** The `kubeconfig` file is usually located at `~/.kube/config` in the home directory of the user who installed `kubectl`. This file allows users to connect to one or more clusters by managing credentials, clusters, and contexts. While the file is commonly named `config`, it's often referred to as the *kubeconfig* file, and its location can vary depending on the cluster setup.
+
+
+Here's a simplified example of what the `kubeconfig` file might look like:
+
+```yaml
+apiVersion: v1
+# Define the clusters
+clusters:
+  - name: dev-cluster  # Logical name for the development cluster
+    cluster:
+      server: https://dev-cluster-api-server:6443  # API server endpoint (usually port 6443)
+      certificate-authority-data: <certificate-data>  # Base64-encoded CA certificate
+  - name: staging-cluster
+    cluster:
+      server: https://staging-cluster-api-server:6443
+      certificate-authority-data: <certificate-data>
+  - name: prod-cluster
+    cluster:
+      server: https://prod-cluster-api-server:6443
+      certificate-authority-data: <certificate-data>
+
+# Define users (credentials for authentication)
+users:
+  - name: seema  # Logical user name
+    user:
+      client-certificate-data: <client-cert-data>  # Base64-encoded client certificate
+      client-key-data: <client-key-data>  # Base64-encoded private key
+
+# Define contexts (combination of cluster + user + optional namespace)
+contexts:
+  - name: seema@dev-cluster-context
+    context:
+      cluster: dev-cluster
+      user: seema
+      namespace: app1-dev-ns  # Default namespace for this context; kubectl commands will run in this namespace when this context is active
+  - name: seema@staging-cluster-context
+    context:
+      cluster: staging-cluster
+      user: seema
+      namespace: app1-staging-ns  # When this context is active, kubectl will run commands in this namespace
+  - name: seema@prod-cluster-context
+    context:
+      cluster: prod-cluster
+      user: seema
+      namespace: app1-prod-ns
+
+# Set the default context to use
+current-context: seema@dev-cluster-context
+
+# -------------------------------------------------------------------
+# Explanation of Certificate Fields:
+
+# certificate-authority-data:
+#   - This is the base64-encoded public certificate of the cluster’s Certificate Authority (CA).
+#   - Used by the client (kubectl) to verify the identity of the API server (ensures it is trusted).
+
+# client-certificate-data:
+#   - This is the base64-encoded public certificate issued to the user (client).
+#   - Sent to the API server to authenticate the user's identity.
+
+# client-key-data:
+#   - This is the base64-encoded private key that pairs with the client certificate.
+#   - Used to prove the user's identity securely to the API server.
+#   - Must be kept safe, as it can be used to impersonate the user.
+
+# Together, these enable secure mutual TLS authentication between kubectl and the Kubernetes API server.
+
+```
+---
+
+### Viewing & Managing Your `kubeconfig`
+
+Your `kubeconfig` file (typically at `~/.kube/config`) holds info about **clusters, users, contexts, and namespaces**. Avoid editing it manually—use `kubectl config` for safe, consistent changes.
+
+> **Pro Tip:** Use `kubectl config -h` to explore powerful subcommands like `use-context`, `set-context`, `rename-context`, etc.
+
+---
+
+### Common `kubectl config` Commands (Compact View)
+
+| Task                                      | Command & Example                                                                                                                                                                        |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| View current context                      | `kubectl config current-context`<br>Example: `seema@dev-cluster-context`                                                                                                                 |
+| List all contexts                         | `kubectl config get-contexts`<br>Shows: `seema@dev-cluster-context`, etc.                                                                                                                |
+| Switch to a different context             | `kubectl config use-context seema@prod-cluster-context`<br>Switches to prod                                                                                                              |
+| View entire config (pretty format)        | `kubectl config view`<br>Readable view of clusters, users, contexts                                                                                                                      |
+| View raw config (YAML for scripting)      | `kubectl config view --raw`<br>Useful for parsing/exporting                                                                                                                              |
+| Show active config file path              | `echo $KUBECONFIG`<br>Defaults to `~/.kube/config` if not explicitly set                                                                                                                 |
+| Set default namespace for current context | `kubectl config set-context --current --namespace=app1-staging-ns`<br>Updates Seema's current context                                                                                    |
+| Override namespace just for one command   | `kubectl get pods --namespace=app1-prod-ns`<br>Runs the command in prod namespace                                                                                                        |
+| Inspect kubeconfig at custom path         | `kubectl config view --kubeconfig=~/kubeconfigs/custom-kubeconfig.yaml`                                                                                                                  |
+| Add a new user                            | `kubectl config set-credentials varun --client-certificate=varun-cert.pem --client-key=varun-key.pem --kubeconfig=~/kubeconfigs/seema-kubeconfig.yaml`                                   |
+| Add a new cluster                         | `kubectl config set-cluster dev-cluster --server=https://dev-cluster-api-server:6443 --certificate-authority=ca.crt --embed-certs=true --kubeconfig=~/kubeconfigs/seema-kubeconfig.yaml` |
+| Add a new context                         | `kubectl config set-context seema@dev-cluster-context --cluster=dev-cluster --user=seema --namespace=app1-dev-ns --kubeconfig=~/kubeconfigs/seema-kubeconfig.yaml`                       |
+| Rename a context                          | `kubectl config rename-context seema@dev-cluster-context seema@dev-env`                                                                                                                  |
+| Delete a context                          | `kubectl config delete-context seema@staging-cluster-context`                                                                                                                            |
+| Delete a user                             | `kubectl config unset users.seema`                                                                                                                                                       |
+| Delete a cluster                          | `kubectl config unset clusters.staging-cluster`                                                                                                                                          |
+---
+
+### Multiple Kubeconfig Files
+
+Kubernetes supports multiple config files. Use `--kubeconfig` with any `kubectl` command to specify which one to use:
+
+```bash
+kubectl get pods --kubeconfig=~/.kube/dev-kubeconfig
+kubectl config use-context dev-cluster --kubeconfig=~/.kube/dev-kubeconfig
+```
+
+Ideal for managing multiple clusters (e.g., dev/staging/prod) cleanly.
+
+---
+
+### Using a Custom Kubeconfig as Default via `KUBECONFIG`
+
+By default, `kubectl` uses the kubeconfig file at `~/.kube/config`. You won't see anything with `echo $KUBECONFIG` unless you've set it yourself.
+
+To avoid specifying `--kubeconfig` with every command, you can set the `KUBECONFIG` environment variable:
+
+**Step-by-step:**
+
+1. Open your shell profile:
+
+   ```bash
+   vi ~/.bashrc   # Or ~/.zshrc, depending on your shell
+   ```
+
+2. Add the line:
+
+   ```bash
+   export KUBECONFIG=$HOME/.kube/my-2nd-kubeconfig-file
+   ```
+
+3. Apply the change:
+
+   ```bash
+   source ~/.bashrc
+   ```
+
+Now, `kubectl` will automatically use that file for all commands.
+
+---
+
+### Adding Entries to a Kubeconfig File
+
+Avoid manually editing the kubeconfig. Instead, use `kubectl config` to manage users, clusters, and contexts.
+
+**Add a new user:**
+
+```bash
+kubectl config set-credentials varun \
+  --client-certificate=~/kubeconfigs/varun-cert.pem \
+  --client-key=~/kubeconfigs/varun-key.pem \
+  --kubeconfig=~/kubeconfigs/my-2nd-kubeconfig-file
+```
+
+**Add a new cluster:**
+
+```bash
+kubectl config set-cluster aws-cluster \
+  --server=https://aws-api-server:6443 \
+  --certificate-authority=~/kubeconfigs/aws-ca.crt \
+  --embed-certs=true \
+  --kubeconfig=~/kubeconfigs/my-2nd-kubeconfig-file
+```
+
+**Add a new context:**
+
+```bash
+kubectl config set-context varun@aws-cluster-context \
+  --cluster=aws-cluster \
+  --user=varun \
+  --namespace=default \
+  --kubeconfig=~/kubeconfigs/my-2nd-kubeconfig-file
+```
+
+**Switch to the new context:**
+
+```bash
+kubectl config use-context varun@aws-cluster-context --kubeconfig=~/kubeconfigs/my-2nd-kubeconfig-file
+```
 
 ---
 
@@ -410,8 +658,21 @@ Although some components can work with just server-side TLS, enabling mTLS is **
 ---
 
 ### **Private CAs in Kubernetes Clusters**
+In Kubernetes, **TLS certificates secure communication** between core components. These certificates are signed by a **private Certificate Authority (CA)**, ensuring authentication and encryption. Depending on security requirements, a cluster can be configured to use:
 
-In Kubernetes, secure communication between components is achieved using **TLS certificates**—and these are typically signed by a **private Certificate Authority (CA)**.
+* A **single CA** for the entire cluster (simpler, easier to manage), or
+* **Multiple CAs** (e.g., a separate CA for etcd) for added security and isolation.
+
+**Why Use Multiple CAs?**
+
+Using **multiple private CAs** strengthens security by **isolating trust boundaries**. This approach is particularly useful for sensitive components like **etcd**, which stores the **entire cluster state**.
+
+Security Considerations:
+- If **etcd is compromised**, an attacker could gain full control over the cluster.
+- To **limit the blast radius** in case of a CA or key compromise, it's common to **assign a separate CA exclusively for etcd**.
+- Other control plane components (e.g., API server, scheduler, controller-manager) can share a **different CA**, ensuring **compartmentalized trust**.
+
+By segmenting certificate authorities, Kubernetes operators can **reduce risk** and **enhance security posture**.
 
 You can configure Kubernetes components to **trust a private CA** by distributing the CA’s public certificate to each component’s trust store. For example:
 
@@ -495,17 +756,6 @@ On the other hand, **etcd** is **always a server** in the Kubernetes architectur
 
 ---
 
-## Kubernetes Certificate Authority (CA) and Key-Pairs
-
-Kubernetes uses **certificate-based authentication** to secure communication between components in the cluster. At the core of this setup is a **Certificate Authority (CA)**, which signs and validates the certificates of all client and server components.
-
-You can use:
-
-* A **single CA** for the entire cluster (simpler, easier to manage), or
-* **Multiple CAs** (e.g., a separate CA for etcd) for added security and isolation.
-
----
-
 ### What Are Private Keys and Certificates?
 
 Think of the **private key and certificate** as a **username and password**:
@@ -532,57 +782,131 @@ Also note:
 
 ### Key-Pairs for Kubernetes Components
 
-| Kubernetes Component  | Private Key                 | Certificate                 | Default Location                       |
-| --------------------- | --------------------------- | --------------------------- | -------------------------------------- |
-| API Server            | `apiserver.key`             | `apiserver.crt`             | `/etc/kubernetes/pki/`                 |
-| Controller Manager    | `controller-manager.key`    | `controller-manager.crt`    | `/etc/kubernetes/pki/`                 |
-| Scheduler             | `scheduler.key`             | `scheduler.crt`             | `/etc/kubernetes/pki/`                 |
-| Kubelet (per node)    | `kubelet-client-<node>.key` | `kubelet-client-<node>.crt` | `/var/lib/kubelet/pki/` (on each node) |
-| Kube Proxy (per node) | `kube-proxy-<node>.key`     | `kube-proxy-<node>.crt`     | `/var/lib/kube-proxy/` (on each node)  |
-| etcd                  | `etcd.key`                  | `etcd.crt`                  | `/etc/kubernetes/pki/etcd/`            |
-| Root CA               | `ca.key`                    | `ca.crt`                    | `/etc/kubernetes/pki/`                 |
-| Service Account       | `sa.key`                    | `sa.pub`                    | `/etc/kubernetes/pki/`                 |
+| **Component**             | **Private Key**                                         | **Certificate**                                  | **Default Location**                      | **Purpose / Usage**                                                                 |
+| ------------------------- | ------------------------------------------------------- | ------------------------------------------------ | ----------------------------------------- | ----------------------------------------------------------------------------------- |
+| **API Server**            | `apiserver.key`                                         | `apiserver.crt`                                  | `/etc/kubernetes/pki/`                    | Serves HTTPS; proves server identity to clients.                                    |
+| **API Server → etcd**     | `apiserver-etcd-client.key`                             | `apiserver-etcd-client.crt`                      | `/etc/kubernetes/pki/`                    | Authenticates API server to etcd via mTLS.                                          |
+| **API Server → Kubelet**  | `apiserver-kubelet-client.key`                          | `apiserver-kubelet-client.crt`                   | `/etc/kubernetes/pki/`                    | Used by API server to authenticate to kubelets.                                     |
+| **Controller Manager**    | Referenced via `controller-manager.conf` → `client-key` | `controller-manager.conf` → `client-certificate` | `/etc/kubernetes/controller-manager.conf` | Authenticates to the API server via mTLS using a kubeconfig with embedded cert/key. |
+| **Scheduler**             | Referenced via `scheduler.conf` → `client-key`          | `scheduler.conf` → `client-certificate`          | `/etc/kubernetes/scheduler.conf`          | Authenticates to the API server via mTLS using a kubeconfig with embedded cert/key. |
+| **Kubelet (per node)**    | `kubelet.key`                                           | `kubelet.crt`                                    | `/var/lib/kubelet/pki/`                   | Authenticates kubelet to API server.                                                |
+| **Kube Proxy (per node)** | `kube-proxy.key`                                        | `kube-proxy.crt`                                 | `/var/lib/kube-proxy/`                    | Authenticates kube-proxy to API server.                                             |
+| **etcd Server**           | `etcd/etcd.key`                                         | `etcd/etcd.crt`                                  | `/etc/kubernetes/pki/etcd/`               | Serves HTTPS to clients like API server.                                            |
+| **etcd Peer**             | `etcd/etcd-peer.key` (if HA setup)                      | `etcd/etcd-peer.crt`                             | `/etc/kubernetes/pki/etcd/`               | Enables mTLS between etcd nodes.                                                    |
+| **etcd Client**           | `etcd/etcd-client.key`                                  | `etcd/etcd-client.crt`                           | `/etc/kubernetes/pki/etcd/`               | Used by components (e.g. controller-manager) to access etcd securely.               |
+| **Main CA**               | `ca.key`                                                | `ca.crt`                                         | `/etc/kubernetes/pki/`                    | Signs core control plane component certs (API server, scheduler, etc.).             |
+| **Service Account Token** | `sa.key`                                                | `sa.pub`                                         | `/etc/kubernetes/pki/`                    | Used to sign service account tokens (for pod-to-API authentication).                |
+
 
 ---
 
-## Kubeconfig Files (Client Authentication)
+**Understanding API Server Key-Pairs in Kubernetes**
 
-Each key component (admin, controller manager, scheduler, and kubelet) also uses a **kubeconfig file** that contains:
+The **Kubernetes API server** communicates with multiple components, often acting as a **client**. To establish secure communication using **mutual TLS (mTLS)**, it must present a valid **TLS certificate** to each of these components. This requires **separate key-pairs** depending on the target service and the signing Certificate Authority (CA).
 
-* A certificate
-* A private key
-* The CA certificate
-* Cluster and user configuration
-
-### Common Kubeconfig Locations (kubeadm-based clusters)
-
-| Component          | Kubeconfig Path                           |
-| ------------------ | ----------------------------------------- |
-| Admin (kubectl)    | `/etc/kubernetes/admin.conf`              |
-| Controller Manager | `/etc/kubernetes/controller-manager.conf` |
-| Scheduler          | `/etc/kubernetes/scheduler.conf`          |
-| Kubelet            | `/var/lib/kubelet/kubeconfig` (per node)  |
+In tools like **KIND (Kubernetes IN Docker)**, these certificates are **automatically generated**, with KIND opting to use **three distinct key-pairs** for improved isolation and security. A minimal setup could technically function with just **two**, but this would compromise modularity and risk compartmentalization.
 
 ---
 
-## Certificates on the Nodes (Kubelet & Kube-Proxy)
+**Why Multiple Key-Pairs?**
 
-Components like **`kubelet`** and **`kube-proxy`** run on *every node* and require **individual client certificates** to communicate securely with the API server.
+>Before we dive into the details, it's important to remember that in **mutual TLS (mTLS)**, **both the client and the server must authenticate themselves**. This means that **each side must possess its own certificate and private key** to prove its identity securely during the handshake—regardless of whether it is acting as a client or a server in a given interaction.
 
-These certificates are **node-specific**, and follow naming conventions based on the hostname.
+The **Kubernetes API server** plays a **dual role**:
+- It acts as a **server** when components like the **scheduler, controller manager, and kubelet** initiate communication with it.
+- It acts as a **client** when it needs to communicate with **etcd**.
 
-### Example: Node `worker-node-1`
-
-| Component  | Private Key Path                                        | Certificate Path                                        |
-| ---------- | ------------------------------------------------------- | ------------------------------------------------------- |
-| Kubelet    | `/var/lib/kubelet/pki/kubelet-client-worker-node-1.key` | `/var/lib/kubelet/pki/kubelet-client-worker-node-1.crt` |
-| Kube Proxy | `/var/lib/kube-proxy/kube-proxy-worker-node-1.key`      | `/var/lib/kube-proxy/kube-proxy-worker-node-1.crt`      |
-
-> These files are **automatically created and rotated** when using `kubeadm`, or provisioned by the cloud control plane in managed services.
+Since different components may trust **different Certificate Authorities (CAs)**, the API server must present a **certificate signed by the correct CA** for each interaction.
 
 ---
 
-## Summary
+### 📌 Why Multiple Key-Pairs?
+
+The API server interacts with **three distinct entities**, each requiring authentication via mTLS:
+
+1. **External clients** (e.g., `kubectl`, CI/CD tools, admin users)
+2. **Kubelet and Controller Manager** (which initiate communication with the API server)
+3. **etcd** (the key-value store backing the cluster)
+
+Each of these components expects the API server to **prove its identity** using a certificate signed by the appropriate CA:
+
+- **etcd** requires mTLS using a certificate signed by the **etcd CA** (`etcd-ca`).
+- **Kubelet and Controller Manager** expect a certificate signed by the **Kubernetes CA** (`kubernetes`).
+
+Since a single certificate **cannot be signed by two different CAs**, at least **two key-pairs** are necessary in a secure setup. **KIND uses three** to further isolate responsibilities.
+
+---
+
+## Breakdown of API Server Certificates
+
+| **Certificate Name**                    | **Purpose**                                                                                   | **Signed By** |
+| --------------------------------------- | --------------------------------------------------------------------------------------------- | ------------- |
+| `apiserver.key` & `apiserver.crt`       | Used by the API server to serve HTTPS to external clients, controller-manager, and scheduler. | Kubernetes CA |
+| `apiserver-kubelet-client.key` & `.crt` | Authenticates the API server to kubelets for executing privileged operations on nodes.        | Kubernetes CA |
+| `apiserver-etcd-client.key` & `.crt`    | Authenticates the API server to etcd for reading/writing cluster state via secure mTLS.       | etcd CA       |
+
+---
+
+**Why Kubernetes Uses Three Key-Pairs Instead of Two**
+
+Even though a minimal setup could technically work with just two key-pairs, most **production-grade Kubernetes clusters—including KIND—use three distinct key-pairs** for the API server. This design choice enhances security and aligns with industry best practices.
+
+* **Improved Security Isolation**
+  If one certificate or key is compromised, it does not affect the integrity or trust of other communication channels (e.g., etcd access remains secure even if kubelet certs are compromised).
+
+* **Granular Trust Boundaries**
+  Each service the API server communicates with—**etcd**, **kubelets**, and **external clients**—can independently verify only the certificate relevant to it, reducing the blast radius of trust.
+
+* **Alignment with Production Standards**
+  This mirrors best practices adopted in real-world, production-grade Kubernetes environments where **separation of concerns and minimal trust** are critical.
+
+**How Kubernetes API Server Trusts Other Components via CAs**
+
+In Kubernetes, for mutual TLS (mTLS) to work securely, both client and server certificates must be signed by a Certificate Authority (CA) trusted by the other party. The API server explicitly declares which CAs it trusts using flags in its manifest file (**`/etc/kubernetes/manifests/kube-apiserver.yaml`**). For example:
+
+* `--client-ca-file=/etc/kubernetes/pki/ca.crt` tells the API server to trust certificates signed by the main Kubernetes CA (used by kubelets, controller manager, etc.).
+* `--etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt` tells it to trust certificates signed by the etcd CA when connecting to the etcd server.
+
+This setup ensures secure and verified communication between Kubernetes components.
+
+---
+
+**How Kubernetes Components Authenticate to the API Server**
+
+Whenever a component **initiates communication toward the API server**, the API server acts as a **server**, and the component acts as a **client**. In Kubernetes, **clients authenticate using a `kubeconfig` file**, which contains:
+
+* The API server endpoint
+* A client certificate and private key
+* The CA certificate to verify the server
+* Optionally, a token or other authentication method
+
+---
+
+**Who Uses a Kubeconfig?**
+
+All components that **initiate a connection to the API server**—such as `kubectl`, the **controller manager**, **scheduler**, **kubelet**, and **kube-proxy**—require a `kubeconfig` file.
+
+Here's where these files are typically located:
+
+| **Component**          | **Kubeconfig Path**                         | **Notes**                                                     |
+| ---------------------- | ------------------------------------------- | ------------------------------------------------------------- |
+| **Admin (kubectl)**    | `~/.kube/config` (user default)             | For interactive CLI access to the cluster                     |
+|                        | `/etc/kubernetes/admin.conf` (on master)    | Used by `kubectl` running locally on the control plane        |
+| **Controller Manager** | `/etc/kubernetes/controller-manager.conf`   | Used by `kube-controller-manager` to talk to the API server   |
+| **Scheduler**          | `/etc/kubernetes/scheduler.conf`            | Used by `kube-scheduler` to talk to the API server            |
+| **Kubelet**            | `/var/lib/kubelet/kubeconfig` (per node)    | Used by each node’s kubelet to authenticate to the API server |
+| **Kube-proxy**         | `/var/lib/kube-proxy/kubeconfig` (per node) | Mounted into the **kube-proxy DaemonSet** pod                 |
+
+> 🔍 For `kube-proxy`, since it runs as a **DaemonSet**, its kubeconfig file is mounted into each pod. You can `kubectl exec` into a `kube-proxy` pod and find the kubeconfig typically at:
+> `/var/lib/kube-proxy/kubeconfig`
+
+---
+
+By tying it all back to the kubeconfig file, you’re helping learners understand not only *how* components connect, but also *where to look* when debugging or configuring authentication.
+
+---
+
+## Key Pointers
 
 * Every Kubernetes component (client and server) has its **own key-pair**, signed by a **Certificate Authority (CA)**.
 * The **CA** uses its **private key** to sign and validate component certificates.
@@ -789,364 +1113,5 @@ openssl x509 -noout -dates -in /path/to/seema.crt
 
 This approach provides Seema with the necessary permissions to interact with the Kubernetes cluster securely while keeping her certificate valid for a reasonable period (90 days). The steps are designed to be both secure and practical for production environments.
 
-
----
-
-## Kubeconfig and Kubernetes Context
-
-### What is a Kubeconfig File and Why Do We Need It?
-
-* The **kubeconfig file** is a configuration file that stores:
-
-  * **Cluster connection information** (e.g., API server URL)
-  * **User credentials** (e.g., authentication tokens, certificates)
-  * **Context information** (e.g., which cluster and user to use)
-* It allows Kubernetes tools (like `kubectl`) to interact with the cluster securely and seamlessly.
-* The kubeconfig file simplifies authentication and access control, eliminating the need to manually provide connection details each time we run a command.
-
-### What If the Kubeconfig File Were Not There?
-
-Without the kubeconfig file, you would need to manually specify the cluster connection information for every command. For example:
-
-* With the kubeconfig file:
-
-  ```bash
-  kubectl get pods
-  ```
-
-* Without the kubeconfig file, you would need to include details like this:
-
-  ```bash
-  kubectl get pods \
-    --server=https://<API_SERVER_URL> \
-    --certificate-authority=<CA_CERT_FILE> \
-    --client-key=<CLIENT_KEY_FILE> \
-    --client-certificate=<CLIENT_CERT_FILE>
-  ```
-
-As you can see, without the kubeconfig file, the command becomes longer and more error-prone. Each command requires explicit details, which can be tedious to manage.
-
-**We will look into how a kubeconfile looks like in a while.**
-
----
-
-### Kubernetes Context
-**Kubernetes contexts** allow users to easily manage multiple clusters and namespaces by storing cluster, user, and namespace information in the `kubeconfig` file. Each context defines a combination of a cluster, a user, and a namespace, making it simple for users like `Seema` to switch between clusters and namespaces seamlessly without manually changing the configuration each time.
-
-## Scenario:
-
-Seema, the user, wants to access three different Kubernetes clusters from her laptop. Let's assume these clusters are:
-
-1. **dev-cluster** (for development)
-2. **staging-cluster** (for staging)
-3. **prod-cluster** (for production)
-
-Seema will need to interact with these clusters frequently. Using Kubernetes contexts, she can set up and switch between these clusters easily.
-
-## How Kubernetes Contexts Work:
-
-### 1. Configuring Contexts:
-
-In the `kubeconfig` file, each cluster, user, and namespace combination is stored as a context. So, Seema can have three different contexts, one for each cluster. The contexts will contain:
-
-* **Cluster details**: API server URL, certificate authority, etc.
-* **User details**: Authentication method (e.g., username/password, token, certificate).
-* **Namespace details**: The default namespace to work in for the context (though the namespace can be overridden on a per-command basis).
-
-### 2. Switching Between Contexts:
-
-With Kubernetes contexts configured, Seema can easily switch between them. If she needs to work on **dev-cluster**, she can switch to the `dev-context`. Similarly, for **staging-cluster**, she switches to `staging-context`, and for **prod-cluster**, the `prod-context`.
-
-## A Quick Note on Namespaces (as discussed after Day 8):
-
-A **Kubernetes namespace** is a virtual cluster within a physical cluster that provides logical segregation for resources. This allows multiple environments like dev, staging, and prod to coexist on the same cluster without interference.
-
-We now use naming like `app1-dev-ns`, `app1-staging-ns`, and `app1-prod-ns` to logically group and isolate resources of `app1` across environments.
-
-For example, `app1-dev-ns` in dev-cluster keeps all resources related to `app1`'s development isolated from production resources in `app1-prod-ns` on prod-cluster.
-
-## Example `kubeconfig` File:
-
-> 🗂️ **Note:** The `kubeconfig` file is usually located at `~/.kube/config` in the home directory of the user who installed `kubectl`. This file allows users to connect to one or more clusters by managing credentials, clusters, and contexts. While the file is commonly named `config`, it's often referred to as the *kubeconfig* file, and its location can vary depending on the cluster setup.
-
-
-Here's a simplified example of what the `kubeconfig` file might look like:
-
-```yaml
-apiVersion: v1
-# Define the clusters
-clusters:
-  - name: dev-cluster  # Logical name for the development cluster
-    cluster:
-      server: https://dev-cluster-api-server:6443  # API server endpoint (usually port 6443)
-      certificate-authority-data: <certificate-data>  # Base64-encoded CA certificate
-  - name: staging-cluster
-    cluster:
-      server: https://staging-cluster-api-server:6443
-      certificate-authority-data: <certificate-data>
-  - name: prod-cluster
-    cluster:
-      server: https://prod-cluster-api-server:6443
-      certificate-authority-data: <certificate-data>
-
-# Define users (credentials for authentication)
-users:
-  - name: seema  # Logical user name
-    user:
-      client-certificate-data: <client-cert-data>  # Base64-encoded client certificate
-      client-key-data: <client-key-data>  # Base64-encoded private key
-
-# Define contexts (combination of cluster + user + optional namespace)
-contexts:
-  - name: seema@dev-cluster-context
-    context:
-      cluster: dev-cluster
-      user: seema
-      namespace: app1-dev-ns  # Default namespace for this context; kubectl commands will run in this namespace when this context is active
-  - name: seema@staging-cluster-context
-    context:
-      cluster: staging-cluster
-      user: seema
-      namespace: app1-staging-ns  # When this context is active, kubectl will run commands in this namespace
-  - name: seema@prod-cluster-context
-    context:
-      cluster: prod-cluster
-      user: seema
-      namespace: app1-prod-ns
-
-# Set the default context to use
-current-context: seema@dev-cluster-context
-
-# -------------------------------------------------------------------
-# Explanation of Certificate Fields:
-
-# certificate-authority-data:
-#   - This is the base64-encoded public certificate of the cluster’s Certificate Authority (CA).
-#   - Used by the client (kubectl) to verify the identity of the API server (ensures it is trusted).
-
-# client-certificate-data:
-#   - This is the base64-encoded public certificate issued to the user (client).
-#   - Sent to the API server to authenticate the user's identity.
-
-# client-key-data:
-#   - This is the base64-encoded private key that pairs with the client certificate.
-#   - Used to prove the user's identity securely to the API server.
-#   - Must be kept safe, as it can be used to impersonate the user.
-
-# Together, these enable secure mutual TLS authentication between kubectl and the Kubernetes API server.
-
-```
-
-### Viewing Your `kubeconfig` File
-
-The `kubeconfig` file is typically located at `~/.kube/config` and holds details about clusters, users, contexts, and the current context.
-
-
-> ⚠️ **Critical Note**
-> Avoid manually editing the `~/.kube/config` file unless absolutely necessary.
-> Always use the `kubectl config` command to interact with or modify your kubeconfig.
-> This ensures proper syntax, avoids accidental corruption, and keeps your configuration consistent.
->
-> 💡 Run `kubectl config -h` anytime to explore all available subcommands (like `set-context`, `rename-context`, `use-context`, etc.).
-
-
-#### Commands to View the Config:
-
-* View the full config in a readable format:
-
-  ```bash
-  kubectl config view
-  ```
-
-* View the raw YAML (helpful for scripting):
-
-  ```bash
-  kubectl config view --raw
-  ```
-
-* View the path to the active config file:
-
-  ```bash
-  echo $KUBECONFIG  # If not set, defaults to ~/.kube/config
-  ```
-
-* Print the current context:
-
-  ```bash
-  kubectl config current-context
-  ```
-
-* List all available contexts:
-
-  ```bash
-  kubectl config get-contexts
-  ```
-
-#### 💡 Note:
-
-You can also open the config file directly:
-
-```bash
-cat ~/.kube/config
-```
-
-## Leveraging Contexts Properly:
-
-### Switch Contexts Easily:
-
-Seema can switch between contexts using the following command:
-
-```bash
-kubectl config use-context <context-name>
-```
-
-**For example:**
-
-```bash
-kubectl config use-context dev-context       # Switch to dev-cluster
-kubectl config use-context staging-context   # Switch to staging-cluster
-kubectl config use-context prod-context      # Switch to prod-cluster
-```
-
-### Namespace Management:
-
-Each context already includes a default namespace, such as `app1-dev-ns`. However, Seema can override the namespace on a per-command basis:
-
-```bash
-kubectl get pods --namespace=app1-prod-ns
-```
-
-### Setting a Default Namespace with `kubectl config`:
-
-If Seema wants to change the default namespace of the **current context**, she can do:
-
-```bash
-kubectl config set-context --current --namespace=app1-staging-ns
-```
-
-### Keep current-context Updated:
-
-To verify or change the current context:
-
-```bash
-kubectl config current-context
-kubectl config use-context prod-context
-```
-
-### List All Contexts:
-
-```bash
-kubectl config get-contexts
-```
-
----
-
-### **Working with Multiple Kubeconfig Files in Kubernetes**
-
-Kubernetes supports **multiple kubeconfig files**, and you can **switch between them** using the `--kubeconfig` flag with any `kubectl` command.
-
----
-
-### **Using `--kubeconfig` to specify a config file**
-
-If you have multiple kubeconfig files, you can tell `kubectl` which one to use with:
-
-```bash
-kubectl config use-context <context-name> --kubeconfig=/path/to/my-kube-config
-```
-
-#### Example:
-
-```bash
-kubectl config use-context seema@dev-cluster-context --kubeconfig=~/.kube/my-kube-config
-```
-
-This helps when you're managing multiple clusters or environments and want to isolate access for better security or clarity.
-
----
-
-### **Making `my-kube-config` the Default via `KUBECONFIG` Environment Variable**
-
-> 💡 By default, `kubectl` uses the kubeconfig file at `~/.kube/config`.
-> You’ll see nothing with `echo $KUBECONFIG` unless you’ve explicitly set it.
-> Set the `KUBECONFIG` variable only when you need to use a non-default or multiple config files.
-
-
-Instead of using `--kubeconfig` every time, you can **export** the config file path in your shell environment.
-
-#### Step-by-Step:
-
-1. **Open your shell config file** (e.g., for Bash):
-
-   ```bash
-   vi ~/.bashrc
-   ```
-
-2. **Add this line:**
-
-   ```bash
-   export KUBECONFIG=$HOME/.kube/my-2nd-kubeconfig-file
-   ```
-
-3. **Reload the config to apply changes:**
-
-   ```bash
-   source ~/.bashrc
-   ```
-
-You can now run `kubectl` commands without repeatedly specifying `--kubeconfig`.
-
----
-
-### **Adding Entries to a Kubeconfig File**
-
-You can add a new **user**, **cluster**, and **context** directly using `kubectl config` commands.
-
-> ⚠️ **Critical Note**
-> Avoid manually editing the `~/.kube/config` file unless absolutely necessary.
-> Always use the `kubectl config` command to interact with or modify your kubeconfig.
-> This ensures proper syntax, avoids accidental corruption, and keeps your configuration consistent.
----
-
-#### **Add a new user** (`varun`):
-
-```bash
-kubectl config set-credentials varun \
-  --client-certificate=~/kubeconfigs/varun-cert.pem \
-  --client-key=~/kubeconfigs/varun-key.pem \
-  --kubeconfig=~/kubeconfigs/my-2nd-kubeconfig-file
-```
-
----
-
-#### **Add a new cluster** (`aws-cluster`):
-
-```bash
-kubectl config set-cluster aws-cluster \
-  --server=https://aws-api-server:6443 \
-  --certificate-authority=~/kubeconfigs/aws-ca.crt \
-  --embed-certs=true \
-  --kubeconfig=~/kubeconfigs/my-2nd-kubeconfig-file
-```
-
----
-
-#### **Add a new context** (`varun@aws-cluster-context`):
-
-```bash
-kubectl config set-context varun@aws-cluster-context \
-  --cluster=aws-cluster \
-  --user=varun \
-  --namespace=default \
-  --kubeconfig=~/kubeconfigs/my-2nd-kubeconfig-file
-```
-
----
-
-You can now switch to this context like so:
-
-```bash
-kubectl config use-context varun@aws-cluster-context --kubeconfig=~/kubeconfigs/my-2nd-kubeconfig-file
-```
 
 ---
