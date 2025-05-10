@@ -26,6 +26,37 @@ Before you dive into Day 31, make sure you have gone through the following days 
    * **GitHub**: [Day 30 Repo](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2030)
    * **YouTube**: [Day 30 Video](https://www.youtube.com/watch?v=MkGPyJqCkB4&ab_channel=CloudWithVarJosh)
 
+---
+
+## Table of Contents
+
+1. [Introduction](#introduction)
+2. [Client and Server – A Refresher](#client-and-server--a-refresher)
+3. [Public Key Cryptography](#public-key-cryptography)
+   3.1. [SSH Authentication (`ssh-keygen`)](#1-secure-remote-access-ssh-keygen-ssh-authentication)
+   3.2. [TLS Certificates (`openssl`)](#2-secure-web-communication-openssl-tls-certificates--identity-validation)
+   3.3. [Key Management Best Practices](#key-management-best-practices)
+   3.4. [Common Key File Formats](#common-key-file-formats)
+   3.5. [What Public Key Cryptography (PKC) Provides](#what-public-key-cryptography-pkc-provides)
+4. [Types of TLS Certificate Authorities (CA)](#types-of-tls-certificate-authorities-ca-public-private-and-self-signed)
+   4.1. [Public CA](#public-ca)
+   4.2. [Private CA](#private-ca)
+   4.3. [Self-Signed Certificates](#self-signed-certificate)
+5. [Kubeconfig and Kubernetes Context](#kubeconfig-and-kubernetes-context)
+   5.1. [What is a Kubeconfig File?](#what-is-a-kubeconfig-file-and-why-do-we-need-it)
+   5.2. [Kubernetes Contexts](#kubernetes-context)
+   5.3. [Example Kubeconfig File](#example-kubeconfig-file)
+   5.4. [Common `kubectl config` Commands](#common-kubectl-config-commands-compact-view)
+   5.5. [Managing Multiple Kubeconfigs](#multiple-kubeconfig-files)
+6. [Mutual TLS (mTLS)](#mutual-tls-mtls)
+   6.1. [Why mTLS in Kubernetes?](#why-mtls-in-kubernetes)
+   6.2. [Private CAs in Kubernetes Clusters](#private-cas-in-kubernetes-clusters)
+7. [Kubernetes Components as Clients and Servers](#kubernetes-components-as-clients-and-servers)
+8. [Private Keys and Certificates in Kubernetes](#what-are-private-keys-and-certificates)
+   8.1. [Key-Pairs for Kubernetes Components](#key-pairs-for-kubernetes-components)
+   8.2. [API Server Key-Pairs](#understanding-api-server-key-pairs-in-kubernetes)
+9. [Granting Cluster Access to a New User (Seema)](#granting-cluster-access-to-a-new-user-seema-using-certificates-and-rbac)
+10. [References](#references)
 
 ---
 
@@ -1119,6 +1150,30 @@ This displays the `notBefore` and `notAfter` dates for the certificate, helping 
 
 ---
 
-This streamlined but detailed process enables certificate-based Kubernetes access with RBAC, ensuring both **secure authentication** and **scoped authorization**.
+### References
+
+1. **Managing TLS in a Cluster**
+   [https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/](https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/)
+
+2. **Certificate Management with Kubeadm**
+   [https://kubernetes.io/docs/setup/best-practices/certificates/](https://kubernetes.io/docs/setup/best-practices/certificates/)
+
+3. **Authenticating to the Kubernetes API Server**
+   [https://kubernetes.io/docs/reference/access-authn-authz/authentication/](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)
+
+4. **Kubeconfig Files Explained**
+   [https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/)
+
+5. **Access Clusters Using the Kubernetes API**
+   [https://kubernetes.io/docs/tasks/administer-cluster/access-cluster-api/](https://kubernetes.io/docs/tasks/administer-cluster/access-cluster-api/)
+
+6. **TLS Bootstrapping for Kubelet**
+   [https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/)
+
+7. **Authorize Access to Kubernetes Resources**
+   [https://kubernetes.io/docs/reference/access-authn-authz/authorization/](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)
+
+8. **Add User Access to a Cluster**
+   [https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles)
 
 ---
