@@ -1,4 +1,4 @@
-# Day 31: Manage TLS Certificates in Kubernetes | Create Certificate Signing Request | CKA Course 2025
+# Day 31: TLS in Kubernetes MASTERCLASS | Kubernetes Context | TLS, mTLS, SSH, CA | CKA Course 2025
 
 ## Video reference for Day 31 is the following:
 
@@ -235,6 +235,29 @@ SSH supports **mutual authentication**, where:
     * If the user accepts (`yes`), the server's host key is **saved in `~/.ssh/known_hosts`** and used for verification in all future connections.
 
     * This approach is called **TOFU (Trust On First Use)**—you trust the server the first time, and ensure its identity doesn't change later.
+    * Host Key Verification Methods:
+
+      1. **TOFU (Trust On First Use)**
+        Accept the host key manually when prompted during the first connection. Risky on untrusted networks.
+
+      2. **Phone-a-Friend**
+        Contact someone who already has access to the server and confirm the server's fingerprint via a secure channel.
+
+      3. **OOB (Out-of-Band) Verification**
+        Compare the fingerprint out-of-band (e.g., via Slack, secure email, a trusted documentation portal, etc.).
+
+      4. **Ansible or Configuration Management**
+        Use automation tools like Ansible, Puppet, or Chef to push known host fingerprints into `~/.ssh/known_hosts`.
+
+      5. **Pre-loading Known Hosts**
+        Populate the `~/.ssh/known_hosts` or `/etc/ssh/ssh_known_hosts` file manually with the correct public key before connecting:
+
+        ```bash
+        ssh-keyscan server.example.com >> ~/.ssh/known_hosts
+        ```
+
+      6. **Centralized Trust Models**
+        In enterprises, SSH certificates (using OpenSSH's CA support) can be used where a trusted internal CA signs host keys and clients trust the CA.
 
   * On subsequent connections:
 
@@ -282,7 +305,7 @@ Rather than encrypting all data directly using asymmetric cryptography, **Public
 
 * In **SSH**:
 
-  * Both the **client and server participate equally** in a **key exchange algorithm** (e.g., **Diffie-Hellman** or **ECDH**).
+  * Both the **client and server participate equally** in a **key exchange algorithm** (e.g., **Diffie-Hellman** or **ECDH (Elliptic Curve Diffie-Hellman)**).
   * Each side contributes a random component and uses the other’s public part to **jointly compute the same session key**.
   * **No single party creates the session key outright**; it is derived **collaboratively**, ensuring that **neither side sends the session key directly** — making it secure even over untrusted networks.
   * >🔐 **Importantly, this session key is established and encryption begins *before* any client authentication takes place.**
@@ -789,7 +812,7 @@ In the diagram below, arrows represent the direction of client-server communicat
 
 1. **API Server**: **Responds to kubectl**, admins, DevOps, and third-party clients, manages resources and cluster state.
 2. **etcd**: **Responds to API server**, stores cluster configuration, state, and secrets (only the API server interacts with etcd).
-3. **Kubelet**: **Responds to API server** for pod status, logs, and exec commands, provides health metrics.
+3. **Kubelet**: **Responds to API server** for pod status, logs, and exec commands.
 
 > The roles mentioned above for clients and servers are **indicative**, not exhaustive. Kubernetes components may interact in multiple ways, and their responsibilities can evolve as the system grows and new features are added.
 
