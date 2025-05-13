@@ -299,7 +299,7 @@ Rather than encrypting all data directly using asymmetric cryptography, **Public
 * In **TLS**:
 
   * **Older TLS (e.g., TLS 1.2 with RSA key exchange)**
-
+![Alt text](/images/31-8.png)
     * The client generates a session key.
     * It encrypts the session key using the server’s public key (from its certificate).
     * The server decrypts it using its private key.
@@ -307,7 +307,7 @@ Rather than encrypting all data directly using asymmetric cryptography, **Public
       **Drawback**: If the server’s private key is compromised, past sessions can be decrypted (no forward secrecy).
 
   * **Modern TLS (e.g., TLS 1.3 or TLS 1.2 with ECDHE)**
-
+![Alt text](/images/31-4.png)
     * The client and server perform an ephemeral key exchange (e.g., ECDHE – Elliptic Curve Diffie-Hellman Ephemeral).
     * Both sides derive the session key collaboratively — it is never transmitted directly.
       **Advantage**: Even if the server’s private key is compromised later, past communications remain secure (forward secrecy).
