@@ -7,8 +7,6 @@
 ## ⭐ Support the Project  
 If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
 
-Here’s the revised version of your pre-requisites section without the book emoji:
-
 ---
 
 ### Pre-Requisites for Day 31
