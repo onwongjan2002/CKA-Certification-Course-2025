@@ -42,11 +42,9 @@ Before you dive into Day 31, make sure you have gone through the following days 
 
 ---
 
-## Introduction
+### Introduction
 
-In this session, we explore how **TLS (Transport Layer Security)** is implemented within a Kubernetes cluster. While TLS is commonly associated with secure communication over the internet, Kubernetes uses it extensively for **securing internal communication** between its various components.
-
-By the end of this session, you will have a clear understanding of how TLS and **mutual TLS (mTLS)** work across Kubernetes components such as `kubectl`, `kube-apiserver`, `etcd`, `controller-manager`, `scheduler`, and others.
+In this session, we revisited the **client-server model**, a foundational concept in network communication, to better understand how tools like `kubectl`, SSH, and TLS operate. We then explored **Public Key Cryptography (PKC)**—the backbone of secure authentication and communication in DevOps—focusing on SSH and HTTPS, and how tools like `ssh-keygen` and `openssl` help manage identity, encryption, and trust.
 
 ---
 
@@ -402,5 +400,11 @@ Our developer **Shwetangi** is building an internal application named **app2**, 
 * `.dev`, `.example` — Reserved for documentation and sometimes local use
 
 Using these reserved domains helps avoid accidental DNS resolution on the public internet and is a best practice for local/dev setups.
+
+---
+
+### **Conclusion**
+
+Public Key Cryptography enables secure remote access, identity verification, and encrypted communication—essentials in modern infrastructure. From SSH keys to TLS certificates, understanding the flow of trust and proper key management is critical for any DevOps engineer. This foundation sets the stage for deeper topics like **mutual TLS**, **client certificates**, and **PKI systems** in production environments.
 
 ---
