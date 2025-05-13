@@ -56,6 +56,8 @@ In this section, we’ll dive into what the kubeconfig file is, why it matters, 
 
 ### What is a Kubeconfig File and Why Do We Need It?
 
+![Alt text](/images/31-9.png)
+
 * The **kubeconfig file** is a configuration file that stores:
 
   * **Cluster connection information** (e.g., API server URL)
@@ -92,6 +94,8 @@ As you can see, without the kubeconfig file, the command becomes longer and more
 
 ### Kubernetes Context
 **Kubernetes contexts** allow users to easily manage multiple clusters and namespaces by storing cluster, user, and namespace information in the `kubeconfig` file. Each context defines a combination of a cluster, a user, and a namespace, making it simple for users like `Seema` to switch between clusters and namespaces seamlessly without manually changing the configuration each time.
+
+![Alt text](/images/31-10.png)
 
 ## Scenario:
 
