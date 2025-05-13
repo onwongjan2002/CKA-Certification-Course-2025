@@ -29,17 +29,17 @@ Before you dive into Day 31 Part 2, make sure you have gone through the followin
 
 ## Table of Contents
 
-1. [Introduction](#introduction)
-2. [Kubeconfig and Kubernetes Context](#kubeconfig-and-kubernetes-context)
-   2.1. [What is a Kubeconfig File and Why Do We Need It?](#what-is-a-kubeconfig-file-and-why-do-we-need-it)
-   2.2. [Kubernetes Contexts](#kubernetes-context)
-   2.3. [Example Kubeconfig File](#example-kubeconfig-file)
-   2.4. [Common `kubectl config` Commands](#common-kubectl-config-commands-compact-view)
-   2.5. [Managing Multiple Kubeconfigs](#multiple-kubeconfig-files)
-3. [Mutual TLS (mTLS)](#mutual-tls-mtls)
-   3.1. [Why mTLS in Kubernetes?](#why-mtls-in-kubernetes)
-4. [Conclusion](#conclusion)
-5. [References](#references)
+1. [Introduction](#introduction)  
+2. [Kubeconfig and Kubernetes Context](#kubeconfig-and-kubernetes-context)  
+   2.1. [What is a Kubeconfig File and Why Do We Need It?](#what-is-a-kubeconfig-file-and-why-do-we-need-it)  
+   2.2. [Kubernetes Contexts](#kubernetes-context)  
+   2.3. [Example Kubeconfig File](#example-kubeconfig-file)  
+   2.4. [Common `kubectl config` Commands](#common-kubectl-config-commands-compact-view)  
+   2.5. [Managing Multiple Kubeconfigs](#multiple-kubeconfig-files)  
+3. [Mutual TLS (mTLS)](#mutual-tls-mtls)  
+   3.1. [Why mTLS in Kubernetes?](#why-mtls-in-kubernetes)  
+4. [Conclusion](#conclusion)  
+5. [References](#references)  
 
 ---
 
