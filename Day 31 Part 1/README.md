@@ -50,6 +50,8 @@ In this session, we revisited the **client-server model**, a foundational concep
 
 ### Client and Server – A Refresher
 
+![Alt text](/images/31-1.png)
+
 A **client** is the one that initiates a request; the **server** is the one that responds.
 
 **General Examples:**
@@ -66,6 +68,8 @@ This direction of communication is critical when we later talk about **client ce
 ## **Public Key Cryptography**
 
 ### **Public Key Cryptography in DevOps: Focus on SSH & HTTPS**  
+
+![Alt text](/images/31-2.png)
 
 Public Key Cryptography (PKC) underpins authentication and secure communication across multiple **application-layer protocols**. While it's used in **email security (PGP, S/MIME), VoIP, database connections, and secure messaging**, a **DevOps engineer primarily interacts with SSH and HTTPS** for managing infrastructure.
 
@@ -173,6 +177,8 @@ We will now discuss both of these in details.
 Public Key Cryptography enables entities—**users, servers, or systems**—to prove their identity using **key pairs** and **digital signatures**. This is fundamental to ensuring that communication is happening with a legitimate party.
 
 #### **In SSH:**
+
+![Alt text](/images/31-3.png)
 
 SSH supports **mutual authentication**, where:
 
@@ -330,6 +336,8 @@ When enabling HTTPS or TLS for applications, certificates must be signed to be t
 
 ### Public CA
 
+![Alt text](/images/31-5.png)
+
 When you visit a website like `pinkbank.com`, your browser needs a way to verify that the server it’s talking to is indeed `pinkbank.com` and not someone pretending to be it. That’s where a **Certificate Authority (CA)** comes into play.
 
 * `pinkbank.com` generates its own digital certificate (often through a **Certificate Signing Request** using tools like OpenSSL) and then gets it signed by a trusted Certificate Authority (CA) such as Let’s Encrypt to prove its authenticity.
@@ -339,8 +347,8 @@ When you visit a website like `pinkbank.com`, your browser needs a way to verify
 If a certificate were self-signed or signed by an unknown entity, Seema’s browser would show a warning because it cannot validate the certificate's authenticity.
 
 **Important Note**
-> In this example, I used **Let’s Encrypt** because it is a popular choice for DevOps engineers, developers, cloud engineers, and others, as they can get their certificates signed for free.
-However, for **production and enterprise use cases**, organizations typically use certificates from well-known **public Certificate Authorities (CAs)** like **Verisign**, **DigiCert**, **Google CA**, **Symantec**, etc.
+In this example, I used Let’s Encrypt because it is a popular choice for DevOps engineers, developers, and cloud engineers, as it provides free, automated SSL/TLS certificates.
+> While Let’s Encrypt is widely used even in production environments, especially for public-facing services, enterprise use cases may also involve certificates from commercial Certificate Authorities (CAs) like DigiCert, GlobalSign, Entrust, or Google Trust Services — which offer advanced features like extended validation (EV), organization validation (OV), SLAs, and dedicated support.
 
 ---
 
@@ -351,6 +359,8 @@ PKI is a framework that manages digital certificates, keys, and Certificate Sign
 ---
 
 ### Private CA
+
+![Alt text](/images/31-6.png)
 
 Just like browsers come with a list of trusted CAs, you can manually add a CA’s public key to your trust store (e.g., in a browser or an operating system).
 
@@ -375,6 +385,8 @@ To securely expose an internal app as `https://app1.internal` without browser wa
 ---
 
 ### Self-Signed Certificate
+
+![Alt text](/images/31-7.png)
 
 A **self-signed certificate** is a certificate that is **signed with its own private key**, rather than being issued by a trusted Certificate Authority (CA).
 
