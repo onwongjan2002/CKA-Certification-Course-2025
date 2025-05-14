@@ -134,6 +134,7 @@ For example, `app1-dev-ns` in dev-cluster keeps all resources related to `app1`'
 
 > 🗂️ **Note:** The `kubeconfig` file is usually located at `~/.kube/config` in the home directory of the user who installed `kubectl`. This file allows users to connect to one or more clusters by managing credentials, clusters, and contexts. While the file is commonly named `config`, it's often referred to as the *kubeconfig* file, and its location can vary depending on the cluster setup.
 
+![Alt text](/images/31-12.png)
 
 Here's a simplified example of what the `kubeconfig` file might look like:
 
