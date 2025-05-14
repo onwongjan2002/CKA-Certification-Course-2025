@@ -1,6 +1,9 @@
-# Day 31: TLS in Kubernetes MASTERCLASS | PART 2 | mTLS Explained, kubeconfig & Kubernetes Context | CKA 2025
+# Day 32: TLS in Kubernetes MASTERCLASS | PART 2 | mTLS , kubeconfig & Kubernetes Context | CKA 2025
 
-## Video reference for Day 31 Part 2 is the following:
+## Video reference for Day 32 is the following:
+
+[![Watch the video](https://img.youtube.com/vi/VBlI0IG4ReI/maxresdefault.jpg)](https://www.youtube.com/watch?v=VBlI0IG4ReI&ab_channel=CloudWithVarJosh)
+
 
 ---
 ## ⭐ Support the Project  
@@ -9,7 +12,7 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 
 ---
 
-### Pre-Requisites for Day 31 Part 2
+### Pre-Requisites for Day 32
 
 Before you dive into Day 31 Part 2, make sure you have gone through the following days to get a better understanding:
 
