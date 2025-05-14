@@ -1,6 +1,6 @@
 # Day 31: TLS in Kubernetes MASTERCLASS | PART 1 | Mutual Auth (SSH), TLS 1.3, Types of CAs | CKA 2025
 
-## Video reference for Day 31 Part 1 is the following:
+## Video reference for Day 31 is the following:
 [![Watch the video](https://img.youtube.com/vi/afQIvp5a0wM/maxresdefault.jpg)](https://www.youtube.com/watch?v=afQIvp5a0wM&ab_channel=CloudWithVarJosh)
 
 ---
