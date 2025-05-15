@@ -14,7 +14,7 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 
 ### Pre-Requisites for Day 32
 
-Before you dive into Day 31 Part 2, make sure you have gone through the following days to get a better understanding:
+Before you dive into Day 32, make sure you have gone through the following days to get a better understanding:
 
 1. **Day 30**: How HTTPS & SSH Work, Encryption, and Its Types
    The concepts of encryption, HTTPS, and SSH mechanisms will be essential for understanding Kubernetes security.
