@@ -54,17 +54,21 @@ Before you dive into Day 33, make sure you have gone through the following days 
     - [Example 3: mTLS Between API Server (Client) and Kubelet (Server)](#example-3-mtls-between-api-server-client-and-kubelet-server)
         - [Server-Side: Kubelet Presents Its Certificate](#server-side-how-the-kubelet-presents-its-certificate)
         - [Client-Side: API Server Verifies and Presents Certificate](#client-side-how-the-api-server-verifies-the-kubelet)
-    - [Recap: How mTLS Happens Here](#recap-how-mtls-happens-here)
+5. [Conclusion](#conclusion)
+5. [Tasks](#tasks-for-you)
 5. [References](#references)
-
 
 ---
 
 ## Introduction
 
-In this session, we explore how **TLS (Transport Layer Security)** is implemented within a Kubernetes cluster. While TLS is commonly associated with secure communication over the internet, Kubernetes uses it extensively for **securing internal communication** between its various components.
+In this session, we’ll demystify how **Kubernetes components authenticate and trust each other using TLS**. You’ll learn:
 
-By the end of this session, you will have a clear understanding of how TLS and **mutual TLS (mTLS)** work across Kubernetes components such as `kubectl`, `kube-apiserver`, `etcd`, `controller-manager`, `scheduler`, and others.
+* How **Private CAs** work inside Kubernetes clusters
+* Which components act as **clients vs. servers**
+* And how to decode **real-world mTLS setups** without memorizing paths
+
+We'll walk through examples like the **Scheduler ↔ API Server**, **API Server ↔ etcd**, and **API Server ↔ Kubelet**, inspecting actual certs and config files to see how TLS and authentication work in practice.
 
 ---
 
@@ -918,6 +922,60 @@ The kubelet validates the certificate using this CA file and accepts the connect
 3. The **API server presents its client certificate** (`apiserver-kubelet-client.crt`) to the kubelet.
 4. The **kubelet verifies** this certificate against its configured CA (`clientCAFile: /etc/kubernetes/pki/ca.crt`).
 5. **mTLS is established** — although only the kubelet strictly verifies the peer’s certificate.
+
+---
+
+##  Tasks for You
+
+Now that you’ve seen how mTLS works between core Kubernetes components, here are **3 hands-on tasks** to apply what you’ve learned:
+
+#### Task 1: Controller Manager (Client) → API Server (Server)
+
+This is similar to Example 1 (Scheduler → API Server).
+Your goal:
+
+* Identify the certificate the **Controller Manager** uses as a client.
+* Verify the **API Server’s certificate and CA** used on the server side.
+* Confirm how trust is established.
+
+Hint: Start by checking the `kube-controller-manager` manifest file.
+
+---
+
+####  Task 2: Kubelet (Client) → API Server (Server)
+
+You already saw kubelet acting as a server — now reverse the flow.
+
+* How does the **kubelet authenticate to the API Server**?
+* Where is the client cert stored?
+* How does the API server validate it?
+
+Look for flags like `--kubeconfig` in the kubelet's launch config.
+
+---
+
+####  Task 3: Kube-Proxy (Client) → API Server (Server)
+
+This one’s a bit more involved — kube-proxy runs as a **DaemonSet**.
+
+* SSH into a node or use `kubectl exec`  to explore a **kube-proxy pod**.
+* Find its **kubeconfig file**.
+* Inspect the client certificate it uses.
+* Confirm how the **API server authenticates** this client.
+
+ **Challenge**: For this task, you'll need to **research on your own**. Use official Kubernetes docs, GitHub, or community threads. This is an essential skill when dealing with real-world clusters.
+
+---
+
+## Conclusion
+
+In this lecture, you learned how **Kubernetes uses TLS and private CAs** to secure internal communication:
+
+* You saw how each component acts as a **client or server** in different scenarios.
+* You explored how **certificates are issued, validated, and trusted** — often asymmetrically.
+* And you saw how **TLS bootstrapping and client auth** work without needing to memorize paths.
+
+This understanding sets the stage for the final part of the series — where we’ll complete the picture with **TLS at the etcd layer**, and how to fully secure your Kubernetes control plane.
 
 ---
 
