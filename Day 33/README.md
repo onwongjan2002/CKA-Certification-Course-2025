@@ -228,7 +228,7 @@ This principle not only helps you understand **how TLS authentication is wired**
 | Static Pod manifests             | `/etc/kubernetes/manifests` |
 | API server & control plane certs | `/etc/kubernetes/pki`       |
 | etcd certificates                | `/etc/kubernetes/pki/etcd`  |
-| Kubelet certs                    | `/var/lib/kubelet/pki`      |
+| Kubelet certs (**on all nodes**)                   | `/var/lib/kubelet/pki`      |
 
 ---
 
@@ -239,6 +239,8 @@ This principle not only helps you understand **how TLS authentication is wired**
 ### Step 1: Know Who’s the Server
 
 * In this scenario: **Scheduler is the client**, **API server is the server**.
+
+---
 
 ### Step 2: How Does the Server Present a Certificate?
 
@@ -286,7 +288,7 @@ Let’s move to the client side.
 
 ---
 
-## 🔑 CLIENT-SIDE: How the Scheduler Authenticates to the API Server
+## CLIENT-SIDE: How the Scheduler Authenticates to the API Server
 
 ### Step 1: Find the Kubeconfig File
 
@@ -352,6 +354,44 @@ This tells us:
   * **Security:** The root CA’s private key is kept **offline or in secure environments**. Intermediate CAs handle day-to-day certificate issuance, minimizing exposure.
   * **Resilience:** If an **intermediate CA is compromised**, it can be revoked without affecting the root. This limits the blast radius.
   * **Best Practice:** This layered structure follows industry standards for security and trust management.
+
+---
+
+**TLS Certificate Chain Flow (Using pinkbank.com as Example)**
+
+### Scenario:
+
+Seema visits `pinkbank.com`, which uses a TLS certificate from Let’s Encrypt.
+
+### What Happens:
+
+1. **pinkbank.com** presents:
+
+   * Its **own certificate** (called the **leaf certificate**)
+     e.g., `CN=pinkbank.com`
+   * Its intermediate certificate, issued by Let’s Encrypt Root CA (e.g., ISRG Root X2) to Let’s Encrypt Intermediate CA (e.g., CN=R3 or CN=E1, depending on the chain used).
+
+2. The browser then:
+
+   * **Verifies the signature on the leaf cert** using the **public key of the intermediate CA**.
+   * **Verifies the intermediate CA’s certificate** using the **public key of the root CA**, which is already **preinstalled and trusted** in the browser’s trust store.
+
+3. The **Root CA** (e.g., `ISRG Root X2`) is:
+
+   * **Not sent** by the server.
+   * **Already trusted** by Seema's browser (this is why root CAs are preloaded in browser/OS trust stores).
+
+**The flow is:**
+
+```
+pinkbank.com (leaf cert) 
+   ⬅ signed by 
+Let's Encrypt Intermediate CA (R3/E1)
+   ⬅ signed by 
+ISRG Root X2 (Root CA, already in browser)
+```
+
+> When Seema's browser sees this chain, it uses the **root CA it already trusts** to verify the chain of trust. That’s why even though `pinkbank.com` doesn’t send the root cert, the validation still succeeds.
 
 ---
 
@@ -448,6 +488,8 @@ In this scenario:
 
 The server (etcd) must present a valid TLS certificate to the API server, and the API server must verify it.
 
+---
+
 ### Step 2: Where Is etcd's Certificate Defined?
 
 We know from [Day 15](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2015) that etcd runs as a **static pod**. So, inspect the etcd manifest:
@@ -478,23 +520,64 @@ openssl x509 -in /etc/kubernetes/pki/etcd/server.crt -text -noout
 
 You should see:
 
-* **Subject:** `CN=etcd`
-* **Issuer:** `CN=kubernetes` (or possibly `CN=etcd-ca`, depending on your setup)
+* **Subject:** `CN=my-second-cluster-control-plane` (matching the control plane hostname)
+* **Issuer:** `CN=etcd-ca` (or possibly `CN=kubernetes`, depending on your setup)
 
 This confirms:
 
-* etcd is identifying itself as `etcd`
+* etcd is identifying itself as `my-second-cluster-control-plane`
 * It’s using a certificate signed by a trusted Certificate Authority (CA)
 
 ---
+
+### Step 3: How Does the API Server Verify etcd's Certificate?
+
+Since the **API server is the client**, it needs to verify the certificate presented by etcd. To do this, it must trust the **CA that signed etcd’s server certificate**.
+
+Check the API server’s static pod manifest:
+
+```bash
+cat /etc/kubernetes/manifests/kube-apiserver.yaml
+```
+
+Look for these flags:
+
+```yaml
+--etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt
+--etcd-certfile=/etc/kubernetes/pki/apiserver-etcd-client.crt
+--etcd-keyfile=/etc/kubernetes/pki/apiserver-etcd-client.key
+```
+
+The `--etcd-cafile` flag tells us:
+
+* The API server uses `/etc/kubernetes/pki/etcd/ca.crt` to verify etcd’s server certificate.
+* This CA file must match the **issuer** of the certificate that etcd presents (i.e., `CN=etcd-ca`).
+
+Inspect it with:
+
+```bash
+openssl x509 -in /etc/kubernetes/pki/etcd/ca.crt -text -noout
+```
+
+You should see:
+
+* **Subject:** `CN=etcd-ca`
+* **Issuer:** `CN=etcd-ca` (self-signed)
+
+This confirms:
+
+* The API server **trusts the etcd-ca**, and that’s how it verifies the authenticity of etcd’s certificate during the TLS handshake.
+
+---
+
 
 ## CLIENT-SIDE: API Server Authenticates to etcd
 
 ### Step 1: Where Does API Server Specify TLS Credentials?
 
-Now let’s inspect how the API server connects securely to etcd.
+Let’s inspect how the API server connects securely to etcd.
 
-Inspect the API server manifest:
+Check the static pod manifest:
 
 ```bash
 cat /etc/kubernetes/manifests/kube-apiserver.yaml
@@ -504,48 +587,109 @@ Look for the etcd-related TLS flags:
 
 ```yaml
 --etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt
---etcd-certfile=/etc/kubernetes/pki/etcd/client.crt
---etcd-keyfile=/etc/kubernetes/pki/etcd/client.key
+--etcd-certfile=/etc/kubernetes/pki/apiserver-etcd-client.crt
+--etcd-keyfile=/etc/kubernetes/pki/apiserver-etcd-client.key
 ```
 
 Let’s break this down:
 
-* `--etcd-cafile`: This is the **CA certificate** the API server uses to **validate etcd’s identity**.
-* `--etcd-certfile`: This is the **API server’s client certificate**, presented to etcd.
-* `--etcd-keyfile`: The **private key** corresponding to the above client certificate.
+* `--etcd-cafile`: The **CA certificate** used by the API server to verify etcd’s identity.
+* `--etcd-certfile`: The **client certificate** the API server presents to etcd.
+* `--etcd-keyfile`: The **private key** associated with the above certificate.
 
-Inspect the client cert:
+Inspect the client certificate:
 
 ```bash
-openssl x509 -in /etc/kubernetes/pki/etcd/client.crt -text -noout
+openssl x509 -in /etc/kubernetes/pki/apiserver-etcd-client.crt -text -noout
 ```
 
-You will likely see:
+You should see:
 
-* **Subject:** `CN=kube-apiserver`
-* **Issuer:** `CN=kubernetes` (or possibly `etcd-ca`)
+* **Subject:** `CN=kube-apiserver-etcd-client`
+* **Issuer:** `CN=etcd-ca`
 
 This confirms:
 
-* The API server is presenting a valid identity (`kube-apiserver`)
-* The certificate is signed by a CA that **etcd trusts**, as configured via `--trusted-ca-file`
+* The API server authenticates to etcd using the identity `kube-apiserver-etcd-client`
+* The certificate is signed by the **etcd-ca**, which etcd is configured to trust
 
 ---
 
-##  How Mutual TLS (mTLS) Works Here
+### Step 2: How Does etcd Verify the API Server's Certificate?
 
-* **etcd** presents `server.crt`, and the **API server** uses `etcd-cafile` to verify it.
-* The **API server** presents `client.crt`, and **etcd** uses its `trusted-ca-file` to validate it.
-* This is **mutual TLS**: **both parties authenticate each other** using certificates.
+Since **etcd is the server**, it must validate the client certificate presented by the API server.
+
+Look at etcd’s static pod manifest:
+
+```bash
+cat /etc/kubernetes/manifests/etcd.yaml
+```
+
+Look for this flag:
+
+```yaml
+--trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+```
+
+This tells us:
+
+* etcd will **only accept client certificates** that are signed by the **CA in `etcd/ca.crt`** — which is the same CA that issued the API server’s `kube-apiserver-etcd-client` certificate.
+
+So:
+
+* etcd uses `--trusted-ca-file` to verify the API server’s certificate.
+* The certificate is trusted because it’s signed by the `etcd-ca`.
 
 ---
 
-###  Takeaway: Focus on Flags, Not File Paths
+### Step 3: How Does the API Server Verify etcd’s Certificate?
 
-What matters is **not memorizing the file paths**, but understanding:
+As the **client**, the API server must verify that it’s talking to a trusted etcd server.
 
-* Which component is the **client** and which is the **server**
-* The **configuration file or static pod manifest** tells you everything: certs, keys, CA, and roles
+That’s where this flag comes in (again, from the API server manifest):
+
+```yaml
+--etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt
+```
+
+This means:
+
+* The API server expects etcd to present a certificate signed by the `etcd-ca`.
+* etcd’s `server.crt` is verified against this CA file.
+
+You can confirm etcd’s server certificate like this:
+
+```bash
+openssl x509 -in /etc/kubernetes/pki/etcd/server.crt -text -noout
+```
+
+Expected output:
+
+* **Subject:** `CN=my-second-cluster-control-plane`
+* **Issuer:** `CN=etcd-ca`
+
+Since the issuer matches the CA the API server trusts, the handshake succeeds.
+
+---
+
+### How Mutual TLS (mTLS) Works Here
+
+* **etcd (server)** presents `server.crt`, and **API server (client)** verifies it using `--etcd-cafile`
+* **API server (client)** presents `apiserver-etcd-client.crt`, and **etcd (server)** verifies it using `--trusted-ca-file`
+
+This is **mutual TLS** — both components **authenticate each other** using certificates.
+
+---
+
+### Takeaway: Focus on Flags, Not File Paths
+
+You don’t need to memorize paths. What matters is:
+
+* Who is the **client**, who is the **server**
+* Which component is **presenting** a certificate
+* Which component is **validating** that certificate via a **trusted CA**
+
+The static pod manifests show you everything you need.
 
 ---
 
@@ -557,6 +701,7 @@ What matters is **not memorizing the file paths**, but understanding:
 | kube-apiserver | Client | `/etc/kubernetes/manifests/kube-apiserver.yaml` | `--etcd-cafile`, `--etcd-certfile`, `--etcd-keyfile` |
 
 ---
+
 
 ## Example 3: mTLS Between API Server (Client) and Kubelet (Server)
 
@@ -635,7 +780,7 @@ This is the **CA Kubernetes used to sign the kubelet’s server certificate** �
 
 ---
 
-### 🧠 How Did the Kubelet Get This Certificate?
+###  How Did the Kubelet Get This Certificate?
 
 Initially, the kubelet doesn’t have a certificate. Instead, it uses a **bootstrap token** to authenticate and request a signed certificate from the API server.
 
@@ -649,75 +794,109 @@ So, kubelet starts by using a bootstrap token, gets authenticated by the API ser
 
 ---
 
-##  CLIENT-SIDE: How the API Server Verifies the Kubelet
+### Step 3: How the API Server Verifies the Kubelet (or Doesn’t)
 
-Now let’s switch roles — the API server is the **client** making a call to the kubelet (server). How does it **verify** the kubelet's identity?
+In this connection, the **API server acts as the client**, initiating HTTPS requests to the kubelet. Normally, TLS clients verify the server’s certificate — but here’s what happens in Kubernetes:
 
-Here’s the **important catch**:
-
-> The API server does **not explicitly configure a separate trust store** for the kubelet’s certificate in the pod manifest. Yet, it can still **verify the kubelet’s certificate** during TLS.
-
-Why?
-
-Kubernetes relies on **host-level trusted CAs**, or in some setups, the kubelet's server certificate is signed by the **same CA** (`/etc/kubernetes/pki/ca.crt`) that the API server trusts for other components.
-
-You can inspect the CA used to sign the kubelet’s server cert, and **compare it with what the API server trusts**.
-
-Let’s inspect the kubelet’s cert again:
+Inspect the kubelet’s server certificate again:
 
 ```bash
 openssl x509 -in /var/lib/kubelet/pki/kubelet.crt -text -noout
 ```
 
-Issuer:
+You’ll see:
 
 ```
-CN=my-second-cluster-control-plane-ca@1741433227
+Issuer: CN=my-second-cluster-control-plane-ca@1741433227
 ```
 
-Now verify that the API server trusts this CA:
+So the kubelet’s certificate is signed by a valid internal CA. But here’s the catch:
 
-Check:
+> The API server is **not configured to trust this CA**.
 
-```bash
-cat /etc/kubernetes/pki/ca.crt | openssl x509 -text -noout
-```
+There is **no `--kubelet-certificate-authority` flag** in the API server’s manifest. That means the API server does **not validate the kubelet’s certificate** in the traditional TLS sense.
 
-If the issuer matches `my-second-cluster-control-plane-ca@1741433227`, then **API server already trusts this CA** via:
+Yet the connection still works. Why?
 
-```yaml
---client-ca-file=/etc/kubernetes/pki/ca.crt
-```
+**Because the trust here is enforced at the client-auth side**:
 
-> ❗ Note: Even though `--client-ca-file` is meant to validate client certs **presented to the API server**, the same CA may sign other server certs (like kubelet's), and TLS libraries used by the API server **may reuse this trust** to verify peer identities like the kubelet’s.
+* The **API server presents a client certificate**, configured via:
+
+  ```yaml
+  --kubelet-client-certificate
+  --kubelet-client-key
+  ```
+
+* The **kubelet verifies this certificate** using its `--client-ca-file`
+
+So while the **kubelet validates the API server**, the reverse is **not strictly true**.
+
+> This isn’t full mutual TLS — and this asymmetry is a known behavior in kubeadm-based clusters.
+
+The API server **relies on RBAC, Node authorizer, and NodeRestriction** for secure interactions with the kubelet, not on validating its TLS server certificate.
 
 ---
 
 ## CLIENT-SIDE: How the API Server Presents Its Own Certificate to the Kubelet
 
-This is **mutual** TLS, so the API server also needs to **authenticate itself** to the kubelet.
+This is **mutual TLS**, so the API server must also **authenticate itself** to the kubelet.
 
-In the kube-apiserver manifest:
+In the `kube-apiserver` manifest, you’ll find:
 
 ```yaml
 --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt
 --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key
 ```
 
-Inspect the client cert:
+Inspect the client certificate:
 
 ```bash
 openssl x509 -in /etc/kubernetes/pki/apiserver-kubelet-client.crt -text -noout
 ```
 
-You’ll see:
+You’ll likely see something like:
 
 ```
-Subject: CN=kube-apiserver
+Subject: CN=kube-apiserver-kubelet-client
 Issuer: CN=kubernetes
 ```
 
-So the API server presents itself with a certificate issued by the **kubernetes CA**, and the kubelet will trust it **as long as it trusts this CA** (either directly or through the cluster bootstrap process).
+This means:
+
+* The API server presents itself as `kube-apiserver-kubelet-client`
+* The certificate is issued by the **Kubernetes cluster CA**
+
+---
+
+### How the Kubelet Verifies the API Server's Certificate
+
+To enforce authentication, the **kubelet must verify that the client (API server) is trusted**.
+
+Open the kubelet config file:
+
+```bash
+cat /var/lib/kubelet/config.yaml
+```
+
+You’ll find:
+
+```yaml
+clientCAFile: /etc/kubernetes/pki/ca.crt
+```
+
+This tells us:
+
+* The kubelet uses `/etc/kubernetes/pki/ca.crt` as its **client certificate authority**
+* Any client (like the API server) presenting a certificate must be **signed by this CA**
+
+So when the API server connects and presents its certificate:
+
+* Subject: `CN=kube-apiserver-kubelet-client`
+* Issuer: The CA in `/etc/kubernetes/pki/ca.crt`
+
+The kubelet validates the certificate using this CA file and accepts the connection.
+
+> This is how **certificate-based client authentication** is enforced on the kubelet side.
 
 ---
 
@@ -727,17 +906,18 @@ So the API server presents itself with a certificate issued by the **kubernetes 
 | ---------- | ---------- | -------------------------------------------------- | --------------------------------------------------------- |
 | Server     | Kubelet    | `/var/lib/kubelet/pki/kubelet.crt`                 | Signed by `my-second-cluster-control-plane-ca@1741433227` |
 | Client     | API Server | `/etc/kubernetes/pki/apiserver-kubelet-client.crt` | Presented to kubelet to authenticate                      |
-| Trust Root | Both Sides | `/etc/kubernetes/pki/ca.crt` (API server CA cert)  | May be used by both components, if they share CA          |
+| Trust Root | Kubelet    | `/etc/kubernetes/pki/ca.crt`                       | Used to verify API server’s client certificate            |
+| (Optional) | API Server | *Not enforced*                                     | Does not strictly verify the kubelet’s certificate        |
 
 ---
 
-## Recap: How mTLS Happens Here
+##  Recap: How mTLS Happens Here
 
-1. Kubelet starts with a **bootstrap token** and gets a **signed server certificate**.
-2. The **API server connects** to the kubelet and verifies its cert using a trusted CA.
-3. The API server **presents its client certificate** (`apiserver-kubelet-client.crt`) to the kubelet.
-4. The **kubelet verifies** this cert is signed by a CA it trusts (typically the same cluster CA).
-5. **mTLS is established.**
+1. The **kubelet** starts with a **bootstrap token**, then obtains a **server certificate** signed by the cluster CA.
+2. The **API server connects** to the kubelet, and although no strict verification is enforced, the kubelet's certificate may be validated **implicitly** if the TLS library uses `/etc/kubernetes/pki/ca.crt`.
+3. The **API server presents its client certificate** (`apiserver-kubelet-client.crt`) to the kubelet.
+4. The **kubelet verifies** this certificate against its configured CA (`clientCAFile: /etc/kubernetes/pki/ca.crt`).
+5. **mTLS is established** — although only the kubelet strictly verifies the peer’s certificate.
 
 ---
 
