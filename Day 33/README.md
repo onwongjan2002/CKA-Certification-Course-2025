@@ -54,8 +54,8 @@ Before you dive into Day 33, make sure you have gone through the following days 
     - [Example 3: mTLS Between API Server (Client) and Kubelet (Server)](#example-3-mtls-between-api-server-client-and-kubelet-server)
         - [Server-Side: Kubelet Presents Its Certificate](#server-side-how-the-kubelet-presents-its-certificate)
         - [Client-Side: API Server Verifies and Presents Certificate](#client-side-how-the-api-server-verifies-the-kubelet)
+5. [Homework :-P](#tasks-for-you)
 5. [Conclusion](#conclusion)
-5. [Tasks](#tasks-for-you)
 5. [References](#references)
 
 ---
@@ -148,7 +148,7 @@ In the diagram below, arrows represent the direction of client-server communicat
 5. **Kube-Proxy**: **Communicates with the API server** for service discovery and endpoints, acts as a network router for traffic.
 6. **Kubelet**: **Reports to the API server** about node health and pod status, fetches ConfigMaps & Secrets, ensures desired containers are running.
 
-
+---
 ### **Server (Responds to the Request)**
 
 1. **API Server**: **Responds to kubectl**, admins, DevOps, and third-party clients, manages resources and cluster state.
@@ -165,7 +165,10 @@ A single component can play both roles depending on the scenario. For example, w
 
 Components such as the **scheduler**, **controller manager**, and **kube-proxy** are always **clients** because they initiate communication with the **API server** to get the desired cluster state, pod placements, or service endpoints.
 
-On the other hand, **etcd** is **always a server** in the Kubernetes architecture. It **only** communicates with the **API server**, which acts as its **client**—no other component talks to etcd directly. This design keeps etcd isolated and secure, as it holds the cluster’s source of truth.
+On the other hand, **etcd** is **always a server** in the Kubernetes architecture. It **only** communicates with the **API server**, which acts as its **client** — no other component talks to etcd directly. This design keeps etcd isolated and secure, as it holds the cluster’s source of truth.
+
+> **Note:** In **HA etcd setups**, each etcd node also acts as a **client** when talking to its **peer members** for cluster replication and consensus.
+> However, this internal etcd-to-etcd communication is **independent of the Kubernetes control plane**.
 
 ---
 
@@ -224,97 +227,95 @@ This principle not only helps you understand **how TLS authentication is wired**
 
 ---
 
-## Important File Locations (on the Control Plane Node)
+## Key TLS and Configuration File Locations (Control Plane & Nodes)
 
-| Purpose                          | Path                        |
-| -------------------------------- | --------------------------- |
-| Kubeconfig files                 | `/etc/kubernetes/*.conf`    |
-| Static Pod manifests             | `/etc/kubernetes/manifests` |
-| API server & control plane certs | `/etc/kubernetes/pki`       |
-| etcd certificates                | `/etc/kubernetes/pki/etcd`  |
-| Kubelet certs (**on all nodes**)                   | `/var/lib/kubelet/pki`      |
+| Purpose                                  | Typical Path                                            | Notes                                                                  |
+| ---------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Kubeconfig files                         | `/etc/kubernetes/*.conf`                                | Used by core components (e.g., controller-manager, scheduler, kubelet) |
+| Static Pod manifests                     | `/etc/kubernetes/manifests`                             | Includes API server, controller-manager, etcd,  scheduler                     |
+| API server & control plane certs         | `/etc/kubernetes/pki`                                   | Certificates and keys for API server                                   |
+| etcd certificates                        | `/etc/kubernetes/pki/etcd`                              | Only present if etcd is running locally                                |
+| Kubelet certificates (on **all nodes**)  | `/var/lib/kubelet/pki`                                  | Includes kubelet server & client certs                                 |
+| kube-proxy configuration (DaemonSet pod) | Inside `/var/lib/kube-proxy/` or mounted into container | Use `kubectl exec` into the kube-proxy pod to inspect                  |
 
 ---
 
 ## SERVER-SIDE: How the API Server Presents Its Certificate
 
-**Goal:** Identify what certificate the API server presents and how the scheduler verifies it.
+**Goal:** Understand what certificate the API server presents and how the scheduler verifies it.
 
-### Step 1: Know Who’s the Server
+---
 
-* In this scenario: **Scheduler is the client**, **API server is the server**.
+### Step 1: Who’s the Server?
+
+In this interaction:
+
+* **Scheduler** → acts as the **client**
+* **API Server** → acts as the **server**
 
 ---
 
 ### Step 2: How Does the Server Present a Certificate?
 
-To identify what certificate the API server presents, we need to look at its configuration. Since we know from [Day 15](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2015) that control plane components run as **static pods**, we check:
+Since API server is a static pod, inspect its manifest:
 
 ```bash
 cat /etc/kubernetes/manifests/kube-apiserver.yaml
 ```
 
-Search for this flag:
+Look for this flag:
 
 ```yaml
 --tls-cert-file=/etc/kubernetes/pki/apiserver.crt
 ```
 
-This tells us the API server presents the certificate at:
+This tells us the API server presents this certificate:
 
 ```bash
 /etc/kubernetes/pki/apiserver.crt
 ```
 
-You can inspect it:
+To view its contents:
 
 ```bash
 openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout
 ```
 
-From this, you’ll see:
+You’ll see output like:
 
-* **Subject**: CN=kube-apiserver
-* **Issuer**: CN=kubernetes (a self-signed root CA)
+```
+Subject: CN=kube-apiserver
+Issuer: CN=kubernetes
+```
 
-This proves that:
+This confirms:
 
-* The API server identifies itself as `kube-apiserver`.
-* The certificate is signed by the Kubernetes **cluster CA**.
-
-### Step 3: How Does the Client (Scheduler) Trust the Server?
-
-To verify the server’s certificate, the **scheduler must trust the CA** that signed it.
-
-So how does the scheduler get that CA cert?
-
-Let’s move to the client side.
+* The API server identifies itself as `kube-apiserver`
+* The certificate is signed by the **Kubernetes cluster CA**
 
 ---
 
-## CLIENT-SIDE: How the Scheduler Authenticates to the API Server
+### Step 3: How Does the Scheduler Trust the API Server’s Certificate?
 
-### Step 1: Find the Kubeconfig File
+To verify the server's certificate, the **scheduler must trust the CA** that signed it.
 
-As per our **Key Principle**, the scheduler uses a kubeconfig file to connect to the API server.
+Here's how that works:
 
-Check the static pod manifest:
+#### a. Locate the Kubeconfig File
+
+The scheduler uses a kubeconfig to connect to the API server. Find it by checking:
 
 ```bash
 cat /etc/kubernetes/manifests/kube-scheduler.yaml
 ```
 
-Look for the `--kubeconfig` flag:
+Look for:
 
 ```yaml
 --kubeconfig=/etc/kubernetes/scheduler.conf
 ```
 
-This is the **kubeconfig file** used by the scheduler.
-
----
-
-### Step 2: How Does the Scheduler Verify the API Server?
+#### b. Inspect the CA Data
 
 Open the kubeconfig file:
 
@@ -322,31 +323,37 @@ Open the kubeconfig file:
 cat /etc/kubernetes/scheduler.conf
 ```
 
-Look for this field:
+Look for:
 
 ```yaml
-certificate-authority-data: <base64 encoded certificate>
+certificate-authority-data: <base64 encoded cert>
 ```
 
-This field contains the **CA certificate** (base64 encoded) that the scheduler uses to validate the API server’s certificate.
+This is the **CA certificate** (in base64) used to validate the API server’s cert.
 
-To decode and inspect it:
+You can decode and inspect it:
 
 ```bash
 echo -n "<base64 data>" | base64 --decode > ca.crt
 openssl x509 -in ca.crt -text -noout
 ```
 
-You’ll see the **Issuer** and **Subject** are both `CN=kubernetes` — meaning this is a **self-signed root CA**.
+This certificate will show:
 
-This tells us:
+```
+Subject: CN=kubernetes
+Issuer: CN=kubernetes
+```
 
-* The scheduler **trusts the Kubernetes CA**.
-* That’s how it **authenticates the API server's identity**.
+That means:
+
+* It’s a **self-signed cluster root CA**
+* The **scheduler trusts this CA**
+* So it can **verify the identity of the API server**
 
 ---
 
-  **Why Do Popular Certificate Authorities Also Have a Root CA?**
+**Why Do Popular Certificate Authorities Also Have a Root CA?**
   Many well-known Certificate Authorities (CAs), like **Sectigo**, **Let's Encrypt**, or **DigiCert**, operate their own **Root Certificate Authority (Root CA)** in addition to one or more **Intermediate CAs**.
 
   **What Is a Root CA and Why Does It Exist?**
@@ -361,52 +368,60 @@ This tells us:
 
 ---
 
-**TLS Certificate Chain Flow (Using pinkbank.com as Example)**
+  **TLS Certificate Chain Flow (Using pinkbank.com as Example)**
 
-### Scenario:
+  **Scenario:**
 
-Seema visits `pinkbank.com`, which uses a TLS certificate from Let’s Encrypt.
+  Seema visits `pinkbank.com`, which uses a TLS certificate from Let’s Encrypt.
 
-### What Happens:
+  **What Happens:**
 
-1. **pinkbank.com** presents:
+  1. **pinkbank.com** presents:
 
-   * Its **own certificate** (called the **leaf certificate**)
-     e.g., `CN=pinkbank.com`
-   * Its intermediate certificate, issued by Let’s Encrypt Root CA (e.g., ISRG Root X2) to Let’s Encrypt Intermediate CA (e.g., CN=R3 or CN=E1, depending on the chain used).
+      * Its **own certificate** (called the **leaf certificate**)
+        e.g., `CN=pinkbank.com`
+      * Its intermediate certificate, issued by Let’s Encrypt Root CA (e.g., ISRG Root X2) to Let’s Encrypt Intermediate CA (e.g., CN=R3 or CN=E1, depending on the chain used).
 
-2. The browser then:
+  2. The browser then:
 
-   * **Verifies the signature on the leaf cert** using the **public key of the intermediate CA**.
-   * **Verifies the intermediate CA’s certificate** using the **public key of the root CA**, which is already **preinstalled and trusted** in the browser’s trust store.
+      * **Verifies the signature on the leaf cert** using the **public key of the intermediate CA**.
+      * **Verifies the intermediate CA’s certificate** using the **public key of the root CA**, which is already **preinstalled and trusted** in the browser’s trust store.
 
-3. The **Root CA** (e.g., `ISRG Root X2`) is:
+  3. The **Root CA** (e.g., `ISRG Root X2`) is:
 
-   * **Not sent** by the server.
-   * **Already trusted** by Seema's browser (this is why root CAs are preloaded in browser/OS trust stores).
+      * **Not sent** by the server.
+      * **Already trusted** by Seema's browser (this is why root CAs are preloaded in browser/OS trust stores).
 
-**The flow is:**
+  **The flow is:**
 
-```
-pinkbank.com (leaf cert) 
-   ⬅ signed by 
-Let's Encrypt Intermediate CA (R3/E1)
-   ⬅ signed by 
-ISRG Root X2 (Root CA, already in browser)
-```
+  ```
+  pinkbank.com (leaf cert) 
+    ⬅ signed by 
+  Let's Encrypt Intermediate CA (R3/E1)
+    ⬅ signed by 
+  ISRG Root X2 (Root CA, already in browser)
+  ```
 
-> When Seema's browser sees this chain, it uses the **root CA it already trusts** to verify the chain of trust. That’s why even though `pinkbank.com` doesn’t send the root cert, the validation still succeeds.
+  > When Seema's browser sees this chain, it uses the **root CA it already trusts** to verify the chain of trust. That’s why even though `pinkbank.com` doesn’t send the root cert, the validation still succeeds.
 
 ---
 
 
-### Step 3: How Does the Scheduler Authenticate Itself to the API Server?
+## CLIENT-SIDE: How the Scheduler Authenticates to the API Server
 
-Now flip the flow.
+In mutual TLS, the **client also needs to present its identity** — in this case, the scheduler must prove who it is to the API server.
 
-The scheduler, being the client, also needs to **present its own certificate** to the API server. This is mutual TLS.
+---
 
-Back in the same kubeconfig file:
+### Step 1: How Does the Scheduler Authenticate Itself?
+
+Open the same kubeconfig file used by the scheduler:
+
+```bash
+cat /etc/kubernetes/scheduler.conf
+```
+
+Look for:
 
 ```yaml
 users:
@@ -416,51 +431,66 @@ users:
     client-key-data: <base64 encoded key>
 ```
 
-These two fields contain:
+These fields hold:
 
-* The scheduler’s **public certificate**
-* Its **private key**
+* `client-certificate-data` → the scheduler’s **public certificate**
+* `client-key-data` → the corresponding **private key**
 
-Decode the certificate:
+To decode and inspect the certificate:
 
 ```bash
 echo -n "<client-certificate-data>" | base64 --decode > scheduler.crt
 openssl x509 -in scheduler.crt -text -noout
 ```
 
-You’ll see:
+You should see something like:
 
-* **Subject:** `CN=system:kube-scheduler`
-* **Issuer:** `CN=kubernetes`
+```
+Subject: CN=system:kube-scheduler
+Issuer: CN=kubernetes
+```
 
 This confirms:
 
-* The scheduler is identifying itself as `system:kube-scheduler`.
-* Its identity is trusted by the API server since the certificate is signed by the **same CA** that the API server trusts.
+* The scheduler is identifying as `system:kube-scheduler`
+* The certificate is signed by the **cluster CA**
 
-How do we know the API server trusts it?
+---
 
-Check the API server manifest again:
+### Step 2: How Does the API Server Verify the Scheduler?
+
+To authenticate the client, the **API server must trust the CA** that signed the scheduler's certificate.
+
+Check the API server manifest:
 
 ```bash
+cat /etc/kubernetes/manifests/kube-apiserver.yaml
+```
+
+Look for:
+
+```yaml
 --client-ca-file=/etc/kubernetes/pki/ca.crt
 ```
 
-So the API server will **only accept client certificates** signed by this CA. The scheduler's certificate qualifies.
+This tells us:
+
+* The API server uses `/etc/kubernetes/pki/ca.crt` to **validate client certificates**
+* Since the scheduler’s certificate is signed by this CA, the API server **accepts and trusts** it
 
 ---
 
 ## Conclusion: Focus on Config Files, Not Hardcoded Paths
 
-Here’s what we’ve learned:
+Here’s what you should take away:
 
-* You **don’t need to memorize** cert locations.
-* All control plane components expose their configuration either via:
+* You **don’t need to memorize** certificate file paths
+* Instead, focus on the **config files**:
 
-  * **`--tls-cert-file`** (for server-side certs)
-  * **`--kubeconfig`** (for client-side certs)
+  * Static pod manifests (`/etc/kubernetes/manifests/`) for server-side config
+  * Kubeconfig files (e.g. `scheduler.conf`) for client-side authentication
 
-Instead of trying to remember file paths, **just remember where to look**: the static pod YAMLs under `/etc/kubernetes/manifests/`.
+Everything flows from there.
 
 ---
 
@@ -646,36 +676,6 @@ So:
 
 ---
 
-### Step 3: How Does the API Server Verify etcd’s Certificate?
-
-As the **client**, the API server must verify that it’s talking to a trusted etcd server.
-
-That’s where this flag comes in (again, from the API server manifest):
-
-```yaml
---etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt
-```
-
-This means:
-
-* The API server expects etcd to present a certificate signed by the `etcd-ca`.
-* etcd’s `server.crt` is verified against this CA file.
-
-You can confirm etcd’s server certificate like this:
-
-```bash
-openssl x509 -in /etc/kubernetes/pki/etcd/server.crt -text -noout
-```
-
-Expected output:
-
-* **Subject:** `CN=my-second-cluster-control-plane`
-* **Issuer:** `CN=etcd-ca`
-
-Since the issuer matches the CA the API server trusts, the handshake succeeds.
-
----
-
 ### How Mutual TLS (mTLS) Works Here
 
 * **etcd (server)** presents `server.crt`, and **API server (client)** verifies it using `--etcd-cafile`
@@ -726,39 +726,62 @@ Like before, we'll **discover certificate paths and roles by reading configurati
 
 ## SERVER-SIDE: How the Kubelet Presents Its Certificate
 
+Before diving in, it's important to understand:
+
+> Unlike the API server, controller manager, etcd, or scheduler — **the kubelet does not run as a Pod**.
+> It runs as a **systemd-managed process** on the node and is typically located at `/usr/bin/kubelet`.
+> That means there’s no Pod manifest to inspect — instead, we must look at the **process arguments** to understand where kubelet stores its certificates and config.
+
+---
+
 ### Step 1: Locate the Kubelet Process
 
-To find where kubelet stores its TLS certificates, start by identifying how it's launched:
+Start by checking how kubelet is launched:
 
 ```bash
 ps -ef | grep kubelet
 ```
 
-From this output, you can typically find a flag like:
+In the output, you’ll typically find a flag like:
 
 ```bash
 --config=/var/lib/kubelet/config.yaml
 ```
 
-This config file will often reference:
+This tells us that kubelet is using the config file at:
 
-```yaml
-certDirectory: /var/lib/kubelet/pki
+```bash
+/var/lib/kubelet/config.yaml
 ```
 
-This tells us that the kubelet stores its TLS certificates in:
+From this, we learn an important principle:
+
+> The presence of the config file at `/var/lib/kubelet/config.yaml` strongly suggests that **kubelet-related files (certs, kubeconfigs, etc.) are stored under `/var/lib/kubelet/`**.
+
+Even if the `config.yaml` doesn’t explicitly list `certDirectory`, you can navigate to:
 
 ```bash
 /var/lib/kubelet/pki/
 ```
 
-Inside this directory, you'll find:
+Inside this directory, you’ll typically find:
+
+| File                             | Purpose                                             |
+| -------------------------------- | --------------------------------------------------- |
+| `kubelet.crt`                    | Server certificate (when kubelet acts as a server)  |
+| `kubelet.key`                    | Private key for `kubelet.crt`                       |
+| `kubelet-client-current.pem`     | Client cert (used when kubelet talks to API server) |
+| `kubelet-client-<timestamp>.pem` | Rotated historical client certs                     |
+
+For **server-side TLS**, the file of interest is:
 
 ```bash
-kubelet.crt                  # The server certificate (used when kubelet is the server)
-kubelet.key                  # The private key
-kubelet-client-current.pem   # Client cert (used when kubelet connects to apiserver)
+/var/lib/kubelet/pki/kubelet.crt
 ```
+
+This is the certificate the **kubelet presents when the API server connects to it** — such as during `kubectl exec`, `logs`, etc.
+
+---
 
 ### Step 2: Inspect the Server Certificate
 
