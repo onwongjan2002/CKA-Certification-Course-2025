@@ -54,7 +54,7 @@ Before you dive into Day 33, make sure you have gone through the following days 
     - [Example 3: mTLS Between API Server (Client) and Kubelet (Server)](#example-3-mtls-between-api-server-client-and-kubelet-server)
         - [Server-Side: Kubelet Presents Its Certificate](#server-side-how-the-kubelet-presents-its-certificate)
         - [Client-Side: API Server Verifies and Presents Certificate](#client-side-how-the-api-server-verifies-the-kubelet)
-5. [Homework :-P](#tasks-for-you)
+5. [Tasks](#tasks-for-you)
 5. [Conclusion](#conclusion)
 5. [References](#references)
 
