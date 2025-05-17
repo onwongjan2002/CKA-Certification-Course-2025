@@ -73,6 +73,9 @@ We'll walk through examples like the **Scheduler ↔ API Server**, **API Server 
 ---
 
 ### **Private CAs in Kubernetes Clusters**
+
+![Alt text](/images/33b.png)
+
 In Kubernetes, **TLS certificates secure communication** between core components. These certificates are signed by a **private Certificate Authority (CA)**, ensuring authentication and encryption. Depending on security requirements, a cluster can be configured to use:
 
 * A **single CA** for the entire cluster (simpler, easier to manage), or
@@ -106,6 +109,7 @@ However, when setting up a cluster **“the hard way”** (e.g., via [Kelsey Hig
 
 While this approach offers **maximum transparency and control**, it also demands a solid understanding of **PKI, TLS, and Kubernetes internals**.
 
+---
 
 **Do Enterprises Use Public CAs for Kubernetes?**
 
@@ -129,6 +133,8 @@ In short:
 ### Kubernetes Components as Clients and Servers
 
 In the diagram below, arrows represent the direction of client-server communication:
+
+![Alt text](/images/33a.png)
 
 * The **arrow tail** indicates the **client**, and the **arrowhead** points to the **server**.
 * Some arrows have **only arrowheads** (e.g., between **kubelet** and **API server**) to indicate that **the server initiates the connection** in specific cases:
@@ -207,6 +213,8 @@ These are not hand-picked just for simplicity. The interactions between:
 ---
 
 ## Example 1: mTLS Between Scheduler (Client) and API Server (Server)
+
+![Alt text](/images/33c.png)
 
 Let’s walk through an end-to-end explanation of how **mutual TLS (mTLS)** works in Kubernetes — specifically, the communication between the **kube-scheduler** (client) and the **kube-apiserver** (server).
 
@@ -505,6 +513,8 @@ Everything flows from there.
 
 ## Example 2: mTLS Between API Server (Client) and etcd (Server)
 
+![Alt text](/images/33c.png)
+
 In this example, we’ll examine how **mutual TLS (mTLS)** works between the **kube-apiserver** (client) and **etcd** (server). We'll again use the principle of inspecting **configuration files** rather than memorizing certificate paths.
 
 This reinforces the idea that once you know **where to look**, you can figure out **how any TLS-secured communication** works inside Kubernetes.
@@ -708,6 +718,8 @@ The static pod manifests show you everything you need.
 
 
 ## Example 3: mTLS Between API Server (Client) and Kubelet (Server)
+
+![Alt text](/images/33c.png)
 
 In this example, we will explore **how mutual TLS (mTLS)** works between the **API server** (client) and the **kubelet** (server).
 
