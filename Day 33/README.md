@@ -1,6 +1,8 @@
 # Day 33: TLS in Kubernetes MASTERCLASS | PART 3 | Private CAs, TLS Auth Flow, mTLS in Kubernetes Cluster | CKA 2025
 
 ## Video reference for Day 33 is the following:
+[![Watch the video](https://img.youtube.com/vi/rVFlVIs2gDU/maxresdefault.jpg)](https://www.youtube.com/watch?v=rVFlVIs2gDU&ab_channel=CloudWithVarJosh)
+
 
 ---
 ## ⭐ Support the Project  
