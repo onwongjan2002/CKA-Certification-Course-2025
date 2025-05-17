@@ -48,6 +48,8 @@ You’ll learn how to use **certificates for authentication** and **RBAC for aut
 
 ### **Granting Cluster Access to a New User (Seema) using Certificates and RBAC**
 
+![Alt text](/images/34a.png)
+
 ---
 
 **Granting Cluster Access to a New User (Seema) using Certificates and RBAC**
