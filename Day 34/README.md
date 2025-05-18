@@ -1,12 +1,12 @@
-# Day 34: TLS in Kubernetes MASTERCLASS | PART 4 | CSR, User Authentication, Granting Cluster Access | CKA 2025
+# Day 34: Day 34: TLS in Kubernetes MASTERCLASS | PART 4 | CSR, External User Access to K8S Cluster | CKA 2025
 
 ## Video reference for Day 34 is the following:
+
+[![Watch the video](https://img.youtube.com/vi/RZ9O5JJeq9k/maxresdefault.jpg)](https://www.youtube.com/watch?v=RZ9O5JJeq9k&ab_channel=CloudWithVarJosh)
 
 ---
 ## ⭐ Support the Project  
 If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
-
-Here’s the revised version of your pre-requisites section without the book emoji:
 
 ---
 
@@ -37,6 +37,13 @@ Before you dive into Day 34, make sure you have gone through the following days 
 
    * **GitHub**: [Day 32 Repo](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2032)
    * **YouTube**: [Day 32 Video](https://www.youtube.com/watch?v=VBlI0IG4ReI&ab_channel=CloudWithVarJosh)
+
+5. **Day 33**: TLS in Kubernetes MASTERCLASS | PART 3 | Root CAs, TLS Auth Flow, mTLS in K8s Cluster
+   Explore how Kubernetes components trust each other using certificates and how mTLS is implemented across control plane communication.
+
+   * **GitHub**: [Day 33 Repo](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2033)
+   * **YouTube**: [Day 33 Video](https://www.youtube.com/watch?v=rVFlVIs2gDU&ab_channel=CloudWithVarJosh)
+
 ---
 
 ## Introduction
