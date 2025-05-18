@@ -3,7 +3,6 @@
 ## Video reference for Day 33 is the following:
 [![Watch the video](https://img.youtube.com/vi/rVFlVIs2gDU/maxresdefault.jpg)](https://www.youtube.com/watch?v=rVFlVIs2gDU&ab_channel=CloudWithVarJosh)
 
-
 ---
 ## ⭐ Support the Project  
 If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
