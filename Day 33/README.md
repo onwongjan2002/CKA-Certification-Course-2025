@@ -854,26 +854,30 @@ So the kubelet’s certificate is signed by a valid internal CA. But here’s th
 
 > The API server is **not configured to trust this CA**.
 
-There is **no `--kubelet-certificate-authority` flag** in the API server’s manifest. That means the API server does **not validate the kubelet’s certificate** in the traditional TLS sense.
+**API Server Trusts Kubelet: Asymmetric TLS**
 
-Yet the connection still works. Why?
+Since the **API server already authenticated the kubelet during the bootstrap process using a bootstrap token**, and later **issued or approved its client certificate** (refer Note 2), it inherently trusts the kubelet’s identity.
 
-**Because the trust here is enforced at the client-auth side**:
+As a result, **strict mutual TLS (mTLS) is not enforced** during API server to kubelet communication. Instead, what occurs is **asymmetric TLS**:  
+- The **kubelet verifies the API server’s certificate**,  
+- But the **API server does not strictly verify the kubelet’s certificate**.
 
-* The **API server presents a client certificate**, configured via:
+> **Note:** Kubernetes can be hardened to enforce full mTLS with mutual certificate validation, but this is *not the default behavior* in most distributions like **kubeadm**, **GKE**, or **EKS**.
 
-  ```yaml
-  --kubelet-client-certificate
-  --kubelet-client-key
-  ```
+---
 
-* The **kubelet verifies this certificate** using its `--client-ca-file`
+**Note 2**
+After the kubelet authenticates using a bootstrap token, it submits a **Certificate Signing Request (CSR)** to obtain a long-term **client certificate**.  
+This certificate is **approved by the API server** (automatically or manually) and **signed by the cluster CA**.  
+The kubelet then uses this certificate to **authenticate as a client** when communicating with the API server.
+
 
 So while the **kubelet validates the API server**, the reverse is **not strictly true**.
 
 > This isn’t full mutual TLS — and this asymmetry is a known behavior in kubeadm-based clusters.
 
-The API server **relies on RBAC, Node authorizer, and NodeRestriction** for secure interactions with the kubelet, not on validating its TLS server certificate.
+After authenticating the kubelet, the API server enforces strict **authorization controls** using mechanisms like **RBAC, the Node authorizer, and NodeRestriction** to ensure secure and granular access. This layered approach reduces reliance on validating the kubelet’s TLS server certificate for trust, focusing instead on robust authorization policies.
+
 
 ---
 
