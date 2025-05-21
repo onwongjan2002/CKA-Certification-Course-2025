@@ -1,4 +1,4 @@
-# Day 34: Day 34: TLS in Kubernetes MASTERCLASS | PART 4 | CSR, External User Access to K8S Cluster | CKA 2025
+# Day 34: TLS in Kubernetes MASTERCLASS | PART 4 | CSR, External User Access to K8S Cluster | CKA 2025
 
 ## Video reference for Day 34 is the following:
 
