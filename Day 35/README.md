@@ -2,6 +2,9 @@
 
 ## Video reference for Day 35 is the following:
 
+[![Watch the video](https://img.youtube.com/vi/DkKc3RCW2BE/maxresdefault.jpg)](https://www.youtube.com/watch?v=DkKc3RCW2BE&ab_channel=CloudWithVarJosh)
+
+
 ---
 ## ⭐ Support the Project  
 If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
@@ -22,8 +25,8 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 * [How to Check and Change the Authorization Mode in Kubernetes](#how-to-check-and-change-the-authorization-mode-in-kubernetes)
 * [Combining RBAC and Webhook Authorization](#combining-rbac-and-webhook-authorization)
 * [Authorization Flow: Node, RBAC & Webhook Combined](#authorization-flow-seema-creating-a-pod)
-    * [Scenario 1: Using Webhook (with Node)](#scenario-1-using-webhook-with-node)
-    * [Scenario 2: Using Webhook + RBAC](#scenario-2-using-webhook--rbac)
+    * [Scenario 1: Using Node + Webhook](#scenario-1-using-node--webhook)
+    * [Scenario 2: Using Node + Webhook + RBAC](#scenario-2-using-node--webhook--rbac)
 * [Conclusion](#conclusion)
 * [References](#references)
 
@@ -677,7 +680,8 @@ As we know, **the Kubernetes API server is responsible for both authentication a
 
 ### 2. Where to Find the API Server Configuration
 
-* On **most Kubernetes clusters created with kubeadm, kind, kops, or minikube**, the control plane components (including the API server) run as **static pods**.
+* On **most Kubernetes clusters created with kubeadm, KIND (which uses kubeadm under the hood), or minikube**, the control plane components (including the API server) run as **static pods** managed by the kubelet. This ensures consistent and resilient management. While **kops** can also run components as static pods, it may use alternatives like systemd units depending on the setup.
+
 
 * The static pod manifests are typically located in:
 
@@ -832,7 +836,9 @@ This guarantees:
 
 ---
 
-### **Scenario 1: Using Webhook (with Node)**
+### **Scenario 1: Using Node + Webhook**
+
+![Alt text](/images/35a.png)
 
 If the API server is configured like this:
 
@@ -865,7 +871,9 @@ Then:
 > ✅ **Summary**: In this setup, the Webhook acts as the **sole decision-maker** for user actions, while the Node authorizer handles kubelet-specific requests in the background.
 ---
 
-### Scenario 2: Using **Webhook + RBAC**
+### Scenario 2: Using **Node + Webhook + RBAC**
+
+![Alt text](/images/35b.png)
 
 Common in production for **layered authorization**.
 
