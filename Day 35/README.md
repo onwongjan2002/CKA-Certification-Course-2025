@@ -109,6 +109,8 @@ Understanding this architecture gives you a clear mental model of how Kubernetes
 
 ## **1. Kubernetes API Endpoints Overview**
 
+![Alt text](/images/35c.png)
+
 At a high level, the API server serves multiple paths. Each path corresponds to a different kind of functionality:
 
 | **Endpoint**                    | **Description**                                                                                                                                                             |
