@@ -2,6 +2,8 @@
 
 ## Video reference for Day 36 is the following:
 
+[![Watch the video](https://img.youtube.com/vi/bP9oqYF_xlE/maxresdefault.jpg)](https://www.youtube.com/watch?v=bP9oqYF_xlE&ab_channel=CloudWithVarJosh)
+
 ---
 ## ⭐ Support the Project  
 If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
